@@ -8,7 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { courseSchema, CourseSchemaType } from "@/lib/zodSchema";
+import {
+  courseCategories,
+  courseLevel,
+  courseSchema,
+  CourseSchemaType,
+} from "@/lib/zodSchema";
 import { ArrowLeft, SparkleIcon } from "lucide-react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +29,13 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import slugify from "slugify";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CourseCreationPage() {
   const form = useForm<CourseSchemaType>({
@@ -35,10 +47,10 @@ export default function CourseCreationPage() {
       price: 0,
       duration: 0,
       level: "Beginner",
-      category: "",
+      category: "Development",
       status: "Draft",
       slug: "",
-      smallDescription: "",
+      // description: "",
     },
   });
 
@@ -52,14 +64,14 @@ export default function CourseCreationPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/courses"
-          className={buttonVariants({
-            variant: "outline",
-            size: "icon",
-          })}
+          // className={buttonVariants({
+          //   variant: "outline",
+          //   size: "icon",
+          // })}
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-5" />
         </Link>
-        <h1 className="text-2xl font-bold">Create Course</h1>
+        <h1 className="text-xl">Create Course</h1>
       </div>
 
       <Card>
@@ -123,7 +135,7 @@ export default function CourseCreationPage() {
                     <FormLabel>Small Description</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="smallDescription"
+                        placeholder="Small Description"
                         {...field}
                         className="min-h-[120px]"
                       />
@@ -132,6 +144,128 @@ export default function CourseCreationPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Description"
+                        {...field}
+                        className="min-h-[120px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="fileKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Thumbnail image</FormLabel>
+                    <FormControl>
+                      <FormControl>
+                        <Input placeholder="thumbnail url" {...field} />
+                      </FormControl>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {courseCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="level"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Level</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Value" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {courseLevel.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (hrs)</FormLabel>
+                      <FormControl>
+                        <FormControl>
+                          <Input
+                            placeholder="Duration"
+                            type="number"
+                            {...field}
+                          />
+                        </FormControl>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price ($)</FormLabel>
+                      <FormControl>
+                        <FormControl>
+                          <Input placeholder="Price" type="number" {...field} />
+                        </FormControl>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </form>
           </Form>
         </CardContent>

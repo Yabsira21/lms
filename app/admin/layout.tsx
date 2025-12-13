@@ -25,7 +25,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div> */}
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col items-center px-4 lg:px-8">
-            {/* Centered wide content */}
             <div className="w-full max-w-6xl flex flex-col gap-4 py-6 md:gap-8 md:py-8">
               {children}
             </div>
