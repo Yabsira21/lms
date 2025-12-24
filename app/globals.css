@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@plugin "@tailwindcss/typography";
+
 @font-face {
   font-family: "Google Sans Flex";
   src: url("/fonts/GoogleSansFlex.ttf") format("truetype");

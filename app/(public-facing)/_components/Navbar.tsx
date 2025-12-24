@@ -56,7 +56,10 @@ export function Navbar() {
             {isPending ? null : session ? (
               <UserDropDown
                 email={session.user.email}
-                imageUrl={session.user.image || ""}
+                imageUrl={
+                  session.user.image ||
+                  `https://avatar.vercel.sh/${session?.user.email}`
+                }
                 name={session.user.name}
               />
             ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,8 +13,9 @@ import {
   courseLevel,
   courseSchema,
   CourseSchemaType,
+  courseStatus,
 } from "@/lib/zodSchema";
-import { ArrowLeft, SparkleIcon } from "lucide-react";
+import { ArrowLeft, Loader2, PlusIcon, SparkleIcon } from "lucide-react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -36,9 +37,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RichTextEditor } from "@/components/rich-text-editor/Editor";
+import { Uploader } from "@/components/file-uploader/Uploader";
+import { useTransition } from "react";
+import { tryCatch } from "@/hooks/try-catch";
+import { CreateCourse } from "./actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function CourseCreationPage() {
-  const form = useForm<CourseSchemaType>({
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  // REMOVED <CourseSchemaType> generic here to allow TS to infer types from the resolver
+  const form = useForm({
     resolver: zodResolver(courseSchema),
     defaultValues: {
       title: "",
@@ -50,25 +61,32 @@ export default function CourseCreationPage() {
       category: "Development",
       status: "Draft",
       slug: "",
-      // description: "",
+      smallDescription: "",
     },
   });
 
   function onSubmit(values: CourseSchemaType) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+    startTransition(async () => {
+      const { data: result, error } = await tryCatch(CreateCourse(values));
+      if (error) {
+        toast.error("Failed to create course");
+        return;
+      }
+
+      if (result.status === "success") {
+        toast.success(result.message);
+        form.reset();
+        router.push("/admin/courses");
+      } else if (result.status === "error") {
+        toast.error(result.message);
+      }
+    });
   }
+
   return (
     <>
       <div className="flex items-center gap-4">
-        <Link
-          href="/admin/courses"
-          // className={buttonVariants({
-          //   variant: "outline",
-          //   size: "icon",
-          // })}
-        >
+        <Link href="/admin/courses">
           <ArrowLeft className="size-5" />
         </Link>
         <h1 className="text-xl">Create Course</h1>
@@ -118,7 +136,7 @@ export default function CourseCreationPage() {
                   className="w-fit"
                   onClick={() => {
                     const titleValue = form.getValues("title");
-                    const slug = slugify(titleValue);
+                    const slug = slugify(titleValue || "", { lower: true }); // Added safety check and options
 
                     form.setValue("slug", slug, { shouldValidate: true });
                   }}
@@ -151,11 +169,12 @@ export default function CourseCreationPage() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea
+                      {/* <Textarea
                         placeholder="Description"
                         {...field}
                         className="min-h-[120px]"
-                      />
+                      /> */}
+                      <RichTextEditor field={field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -169,7 +188,11 @@ export default function CourseCreationPage() {
                     <FormLabel>Thumbnail image</FormLabel>
                     <FormControl>
                       <FormControl>
-                        <Input placeholder="thumbnail url" {...field} />
+                        {/* <Input placeholder="thumbnail url" {...field} /> */}
+                        <Uploader
+                          onChange={field.onChange}
+                          value={field.value}
+                        />
                       </FormControl>
                     </FormControl>
                     <FormMessage />
@@ -237,13 +260,14 @@ export default function CourseCreationPage() {
                     <FormItem>
                       <FormLabel>Duration (hrs)</FormLabel>
                       <FormControl>
-                        <FormControl>
-                          <Input
-                            placeholder="Duration"
-                            type="number"
-                            {...field}
-                          />
-                        </FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Duration"
+                          // value={field.value}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,15 +281,60 @@ export default function CourseCreationPage() {
                     <FormItem>
                       <FormLabel>Price ($)</FormLabel>
                       <FormControl>
-                        <FormControl>
-                          <Input placeholder="Price" type="number" {...field} />
-                        </FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Price"
+                          // value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(Number(e.target.value))
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Value" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {courseStatus.map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" disabled={isPending}>
+                {isPending ? (
+                  <>
+                    Creating...
+                    <Loader2 className="animate-spin ml-1" />
+                  </>
+                ) : (
+                  <>
+                    Create Course <PlusIcon className="ml-1" size={16} />
+                  </>
+                )}
+              </Button>
             </form>
           </Form>
         </CardContent>
