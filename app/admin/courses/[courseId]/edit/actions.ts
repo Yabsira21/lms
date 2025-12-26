@@ -7,6 +7,7 @@ import { courseSchema, CourseSchemaType } from "@/lib/zodSchema";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 
 import { request } from "@arcjet/next";
+import { revalidatePath } from "next/cache";
 
 const aj = arcjet
   .withRule(
@@ -64,6 +65,94 @@ export async function editCourse(
     return {
       status: "success",
       message: "Course updated successfully",
+    };
+  } catch {
+    return {
+      status: "error",
+      message: "Something went wrong",
+    };
+  }
+}
+
+export async function reorderLessons(
+  chapterId: string,
+  lessons: {
+    id: string;
+    position: number;
+  }[],
+  courseId: string
+): Promise<APIResponse> {
+  await requireAdmin();
+  try {
+    if (!lessons || lessons.length === 0) {
+      return {
+        status: "error",
+        message: "No lessons to reorder",
+      };
+    }
+
+    const updates = lessons.map((lesson) =>
+      prisma.lesson.update({
+        where: {
+          id: lesson.id,
+          chapterId: chapterId,
+        },
+        data: {
+          position: lesson.position,
+        },
+      })
+    );
+
+    await prisma.$transaction(updates);
+
+    revalidatePath(`/admin/courses/${courseId}/edit`);
+
+    return {
+      status: "success",
+      message: "Lessons reordered successfully",
+    };
+  } catch {
+    return {
+      status: "error",
+      message: "Something went wrong",
+    };
+  }
+}
+
+export async function reorderChapter(
+  courseId: string,
+  chapters: {
+    id: string;
+    position: number;
+  }[]
+): Promise<APIResponse> {
+  await requireAdmin();
+  try {
+    if (!chapters || chapters.length === 0) {
+      return {
+        status: "error",
+        message: "No chapters to reorder",
+      };
+    }
+    const updates = chapters.map((chapter) =>
+      prisma.chapter.update({
+        where: {
+          id: chapter.id,
+          courseId: courseId,
+        },
+        data: {
+          position: chapter.position,
+        },
+      })
+    );
+
+    await prisma.$transaction(updates);
+
+    revalidatePath(`/admin/courses/${courseId}/edit`);
+
+    return {
+      status: "success",
+      message: "Chapters reordered successfully",
     };
   } catch {
     return {
