@@ -44,10 +44,12 @@ import { tryCatch } from "@/hooks/try-catch";
 import { CreateCourse } from "./actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useConfetti } from "@/hooks/use-confetti";
 
 export default function CourseCreationPage() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const { triggerConfetti } = useConfetti();
   // REMOVED <CourseSchemaType> generic here to allow TS to infer types from the resolver
   const form = useForm({
     resolver: zodResolver(courseSchema),
@@ -75,6 +77,7 @@ export default function CourseCreationPage() {
 
       if (result.status === "success") {
         toast.success(result.message);
+        triggerConfetti();
         form.reset();
         router.push("/admin/courses");
       } else if (result.status === "error") {
