@@ -180,7 +180,11 @@ export function EditCourseForm({ data }: iAppProps) {
               <FormControl>
                 <FormControl>
                   {/* <Input placeholder="thumbnail url" {...field} /> */}
-                  <Uploader onChange={field.onChange} value={field.value} />
+                  <Uploader
+                    onChange={field.onChange}
+                    value={field.value}
+                    fileTypeAccepted="image"
+                  />
                 </FormControl>
               </FormControl>
               <FormMessage />

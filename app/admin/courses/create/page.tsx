@@ -192,6 +192,7 @@ export default function CourseCreationPage() {
                         <Uploader
                           onChange={field.onChange}
                           value={field.value}
+                          fileTypeAccepted="image"
                         />
                       </FormControl>
                     </FormControl>
