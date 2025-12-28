@@ -8,12 +8,7 @@ import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 
 const aj = arcjet
-  .withRule(
-    detectBot({
-      mode: "LIVE",
-      allow: [],
-    })
-  )
+  
   .withRule(
     fixedWindow({
       mode: "LIVE",

@@ -28,12 +28,7 @@ export const fileUploadSchema = z.object({
 });
 
 const aj = arcjet
-  .withRule(
-    detectBot({
-      mode: "LIVE",
-      allow: [],
-    })
-  )
+  
   .withRule(
     fixedWindow({
       mode: "LIVE",
