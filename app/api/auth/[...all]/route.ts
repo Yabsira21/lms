@@ -16,19 +16,6 @@ import { toNextJsHandler } from "better-auth/next-js";
 import { NextRequest } from "next/server";
 import arcjet from "@/lib/arcjet";
 
-// The arcjet instance is created outside of the handler
-// const aj = arcjet({
-//   key: process.env.ARCJET_KEY, // Get your site key from https://app.arcjet.com
-//   characteristics: ["userId"],
-//   rules: [
-//     // Protect against common attacks with Arcjet Shield. Other rules are
-//     // added dynamically using `withRule`.
-//     shield({
-//       mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
-//     }),
-//   ],
-// });
-
 const emailOptions = {
   mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
   // Block emails that are disposable, invalid, or have no MX records

@@ -20,6 +20,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   courses       Course[]
+  enrollment    Enrollment[]
 
   role      String?   @default("user")
 	banned    Boolean   @default(false)
@@ -100,6 +101,8 @@ model Course {
   userId    String
 
   chapters Chapter[]
+
+  enrollment Enrollment[]
 }
 
 enum CourseLevel {
@@ -141,4 +144,26 @@ model Lesson {
   updatedAt DateTime @updatedAt
   chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   chapterId String
+}
+
+model Enrollment {
+  id String @id @default(uuid())
+
+  amount Int
+  status EnrollmentStatus @default(Pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+
+  User User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+}
+
+enum EnrollmentStatus {
+  Pending
+  Active
+  Cancelled
 }
