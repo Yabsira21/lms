@@ -18,7 +18,11 @@ import {
 } from "@tabler/icons-react";
 import { CheckIcon } from "lucide-react";
 import Image from "next/image";
-import { EnrollButton } from "./EnrollBtn";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { enrollInCourseAction } from "./action";
+import { checkIfCourseBought } from "@/app/data/user/user-is-enrolled";
+import Link from "next/link";
+import { EnrollmentButton } from "./_components/EnrollmentButton";
 // import { EnrollButton } from "@/components/course/EnrollButton"; // Import the client component
 
 type Params = Promise<{ slug: string }>;
@@ -27,6 +31,7 @@ export default async function SlugPage({ params }: { params: Params }) {
   const { slug } = await params;
   const course = await getIndividualCourse(slug);
   const thumbnailUrl = useContructUrl(course.fileKey);
+  const isEnrolled = await checkIfCourseBought(course.id);
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 mt-5">
@@ -242,12 +247,16 @@ export default async function SlugPage({ params }: { params: Params }) {
                 </ul>
               </div>
 
-              {/* Use the client component here */}
-              <EnrollButton
-                courseId={course.id}
-                price={course.price}
-                title={course.title}
-              />
+              {isEnrolled ? (
+                <Link
+                  className={buttonVariants({ className: "w-full" })}
+                  href="/"
+                >
+                  Watch Course
+                </Link>
+              ) : (
+                <EnrollmentButton courseId={course.id} />
+              )}
 
               <p className="text-xs text-center text-muted-foreground mt-3">
                 30-day money-back guarantee
