@@ -26,6 +26,11 @@ export async function enrollInCourseAction(courseId: string) {
         message: "Course not found",
       };
     }
+
+    return {
+      status: "success",
+      message: "",
+    };
   } catch {
     return {
       status: "error",

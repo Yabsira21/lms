@@ -1,7 +1,6 @@
 import { getIndividualCourse } from "@/app/data/course/get-course";
 import { RenderDescription } from "@/components/rich-text-editor/RenderDescription";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Collapsible,
@@ -18,8 +17,9 @@ import {
   IconClock,
 } from "@tabler/icons-react";
 import { CheckIcon } from "lucide-react";
-// import { Badge } from "lucide-react";
 import Image from "next/image";
+import { EnrollButton } from "./EnrollBtn";
+// import { EnrollButton } from "@/components/course/EnrollButton"; // Import the client component
 
 type Params = Promise<{ slug: string }>;
 
@@ -152,7 +152,7 @@ export default async function SlugPage({ params }: { params: Params }) {
         </div>
       </div>
 
-      <div className="order-2 lg:col-span1">
+      <div className="order-2 lg:col-span-1">
         <div className="sticky top-20">
           <Card className="py-0">
             <CardContent className="p-6">
@@ -242,8 +242,16 @@ export default async function SlugPage({ params }: { params: Params }) {
                 </ul>
               </div>
 
-              <Button className="w-full">Enroll Now!</Button>
-              {/* <p>30-day money-back guarr</p> */}
+              {/* Use the client component here */}
+              <EnrollButton
+                courseId={course.id}
+                price={course.price}
+                title={course.title}
+              />
+
+              <p className="text-xs text-center text-muted-foreground mt-3">
+                30-day money-back guarantee
+              </p>
             </CardContent>
           </Card>
         </div>
