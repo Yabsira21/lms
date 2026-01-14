@@ -290,7 +290,7 @@ export async function enrollInCourseAction(
         first_name: user.name?.trim().substr(0, 50) || "User",
         last_name: ".",
         tx_ref: txRef,
-        callback_url: `https://d0bc5ead6d21.ngrok-free.app/api/webhook/chapa`,
+        callback_url: `${env.NGROK_URL}/api/webhook/chapa`,
         // callback_url: `http://localhost:3000/api/webhook/chapa`,
         return_url: `${env.BETTER_AUTH_URL}/payment/success`,
         customization: {

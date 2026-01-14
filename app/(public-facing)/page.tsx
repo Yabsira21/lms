@@ -1,7 +1,12 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { HomeSkeleton } from "./_components/HomeSkeleton";
 
 interface featureProps {
   title: string;
@@ -37,6 +42,16 @@ const features: featureProps[] = [
 ];
 
 export default function Home() {
+  const { data: session, isPending } = authClient.useSession();
+
+  if (isPending) {
+    return <HomeSkeleton />;
+  }
+
+  // if (session) {
+  //   redirect(`/dashboard`);
+  // }
+
   return (
     <>
       <section className="relative py-20">
@@ -55,12 +70,14 @@ export default function Home() {
               Explore Courses
             </Link>
 
-            <Link
-              className={buttonVariants({ size: "lg", variant: "outline" })}
-              href="/login"
-            >
-              Sign In
-            </Link>
+            {isPending ? null : !session ? (
+              <Link
+                className={buttonVariants({ size: "lg", variant: "outline" })}
+                href="/login"
+              >
+                Sign In
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>
