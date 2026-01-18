@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:ngrok": "bash scripts/ngrok-setup.sh",
+    "dev:ngrok:auto": "bash scripts/ngrok-with-env.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

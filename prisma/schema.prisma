@@ -9,26 +9,18 @@ datasource db {
 }
 
 model User {
-  id             String           @id
-  name           String
-  email          String           @unique
-  emailVerified  Boolean          @default(false)
-  image          String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  accounts       Account[]
-  sessions       Session[]
-  courses        Course[]
-  enrollment     Enrollment[]
-  lessonProgress LessonProgress[]
-  documents      Document[]
-  faceEmbedding  FaceEmbedding?
-  Attendance     Attendance[]
-
-  role       String?   @default("user")
-  banned     Boolean   @default(false)
-  banReason  String?
-  banExpires DateTime?
+  id            String         @id
+  name          String
+  email         String         @unique
+  emailVerified Boolean        @default(false)
+  image         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  Attendance    Attendance[]
+  courses       Course[]
+  faceEmbedding FaceEmbedding?
+  accounts      Account[]
+  sessions      Session[]
 
   @@map("user")
 }
@@ -43,8 +35,6 @@ model Session {
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  impersonatedBy String?
 
   @@index([userId])
   @@map("session")
@@ -83,144 +73,28 @@ model Verification {
 }
 
 model Course {
-  id String @id @default(uuid())
-
-  title       String
-  description String
-  fileKey     String
-  price       Int
-  duration    Int
-  level       CourseLevel @default(Beginner)
-
+  id               String       @id @default(uuid())
+  title            String
+  description      String
+  fileKey          String
+  price            Int
+  duration         Int
+  level            CourseLevel  @default(Beginner)
   category         String
   smallDescription String
-  slug             String @unique
-
-  status CourseStatus @default(Draft)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-
-  chapters   Chapter[]
-  enrollment Enrollment[]
-  Class      Class[]
-}
-
-enum CourseLevel {
-  Beginner
-  Intermediate
-  Advanced
-}
-
-enum CourseStatus {
-  Draft
-  Published
-  Archieved
-}
-
-model Chapter {
-  id String @id @default(uuid())
-
-  title    String
-  position Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId  String
-
-  lessons Lesson[]
-}
-
-model Lesson {
-  id String @id @default(uuid())
-
-  title        String
-  description  String?
-  thumbnailKey String?
-  videoKey     String?
-  position     Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  chapterId String
-
-  lessonProgress LessonProgress[]
-}
-
-model Enrollment {
-  id String @id @default(uuid())
-
-  amount Int
-  status EnrollmentStatus @default(Pending)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  Course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId String
-
-  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
-
-  @@unique([userId, courseId])
-}
-
-enum EnrollmentStatus {
-  Pending
-  Active
-  Cancelled
-}
-
-model LessonProgress {
-  id String @id @default(uuid())
-
-  completed Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  User     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  Lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  lessonId String
-
-  @@unique([userId, lessonId])
-}
-
-model Document {
-  id         String  @id @default(uuid())
-  title      String
-  content    String?
-  icon       String?
-  coverImage String?
-
-  isArchived  Boolean @default(false)
-  isPublished Boolean @default(false)
-
-  // owner
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Notion-style hierarchy (self relation)
-  parentId String?
-  parent   Document?  @relation("DocumentTree", fields: [parentId], references: [id])
-  children Document[] @relation("DocumentTree")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([userId, parentId])
+  slug             String       @unique
+  status           CourseStatus @default(Draft)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  userId           String
+  Class            Class[]
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model FaceEmbedding {
   id        String   @id @default(uuid())
   userId    String   @unique
-  embedding String // JSON string of number array
+  embedding String
   imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -260,6 +134,18 @@ model Class {
   Course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
+}
+
+enum CourseLevel {
+  Beginner
+  Intermediate
+  Advanced
+}
+
+enum CourseStatus {
+  Draft
+  Published
+  Archieved
 }
 
 enum ClassStatus {

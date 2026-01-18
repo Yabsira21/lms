@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -18,8 +17,7 @@ import {
   Bell,
   BookOpen,
   Calendar,
-  MessageSquare,
-  Camera
+  MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import FaceRegistrationCard from './FaceRegistrationCard';
@@ -89,24 +87,15 @@ export default function ProfileContent({ user }: ProfileContentProps) {
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="relative">
-                <Avatar className="h-32 w-32 mb-4">
-                  <AvatarImage 
-                    src={user.image || `https://avatar.vercel.sh/${user.email}`} 
-                    alt={user.name} 
-                  />
-                  <AvatarFallback className="text-3xl">
-                    {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute bottom-4 right-0 rounded-full h-8 w-8"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-              </div>
+              <Avatar className="h-32 w-32 mb-4">
+                <AvatarImage 
+                  src={user.image || `https://avatar.vercel.sh/${user.email}`} 
+                  alt={user.name} 
+                />
+                <AvatarFallback className="text-3xl">
+                  {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               
               <h2 className="text-2xl font-bold">{user.name}</h2>
               <div className="flex items-center gap-2 text-muted-foreground mt-1">
@@ -117,12 +106,13 @@ export default function ProfileContent({ user }: ProfileContentProps) {
 
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-muted-foreground" />
+                <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 {isEditing ? (
                   <Input
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="Phone Number"
+                    className="flex-1"
                   />
                 ) : (
                   <div className="flex items-center justify-between flex-1">
@@ -141,13 +131,14 @@ export default function ProfileContent({ user }: ProfileContentProps) {
 
               <div className="space-y-2">
                 <div className="flex items-start gap-2">
-                  <Edit2 className="h-4 w-4 text-muted-foreground mt-1" />
+                  <Edit2 className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
                   {isEditing ? (
                     <Textarea
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="Bio"
                       rows={3}
+                      className="flex-1"
                     />
                   ) : (
                     <div className="flex-1">
@@ -158,7 +149,7 @@ export default function ProfileContent({ user }: ProfileContentProps) {
                 </div>
               </div>
 
-              {isEditing && (
+              {isEditing ? (
                 <div className="flex gap-2 pt-2">
                   <Button onClick={handleSaveProfile} className="flex-1">
                     Save Changes
@@ -171,13 +162,10 @@ export default function ProfileContent({ user }: ProfileContentProps) {
                     Cancel
                   </Button>
                 </div>
-              )}
-
-              {!isEditing && (
+              ) : (
                 <Button 
                   onClick={() => setIsEditing(true)} 
-                  className="w-full"
-                  variant="default"
+                  className="w-full bg-orange-500 hover:bg-orange-600"
                 >
                   Edit Profile
                 </Button>
@@ -255,7 +243,7 @@ export default function ProfileContent({ user }: ProfileContentProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="default" className="w-full md:w-auto">
+          <Button variant="default" className="w-full md:w-auto bg-orange-500 hover:bg-orange-600">
             <Key className="h-4 w-4 mr-2" />
             Change Password
           </Button>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Camera, CheckCircle2, XCircle } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -32,7 +32,7 @@ export default function FaceRegistrationCard({ userId }: FaceRegistrationCardPro
     try {
       const response = await fetch('/api/face-recognition/check');
       const data = await response.json();
-      setIsRegistered(data.registered || false);
+      setIsRegistered(data.hasRegistered || false);
     } catch (error) {
       console.error('Error checking face registration status:', error);
     } finally {
@@ -61,30 +61,43 @@ export default function FaceRegistrationCard({ userId }: FaceRegistrationCardPro
             {isLoading ? (
               <Badge variant="secondary">Checking...</Badge>
             ) : isRegistered ? (
-              <Badge variant="default" className="bg-green-600">
-                <CheckCircle2 className="h-3 w-3 mr-1" />
+              <Badge variant="default" className="bg-green-600 hover:bg-green-700">
                 Registered
               </Badge>
             ) : (
               <Badge variant="destructive">
-                <XCircle className="h-3 w-3 mr-1" />
                 Not Registered
               </Badge>
             )}
           </div>
 
+          {/* Face placeholder with frame */}
           <div className="aspect-video bg-muted rounded-lg flex items-center justify-center relative overflow-hidden">
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative">
-                <div className="h-32 w-32 rounded-full bg-background flex items-center justify-center">
-                  <Camera className="h-16 w-16 text-muted-foreground" />
+                {/* Face silhouette */}
+                <div className="h-32 w-32 rounded-full bg-background flex items-center justify-center border-2 border-muted-foreground/20">
+                  <svg
+                    className="h-20 w-20 text-muted-foreground/40"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
                 </div>
-                {/* Face detection frame overlay */}
-                <div className="absolute inset-0 border-2 border-primary rounded-full opacity-50" />
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-16 h-1 bg-primary" />
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-16 h-1 bg-primary" />
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-16 w-1 bg-primary" />
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 h-16 w-1 bg-primary" />
+                
+                {/* Corner brackets for face detection frame */}
+                <div className="absolute -top-2 -left-2 w-8 h-8 border-t-2 border-l-2 border-primary" />
+                <div className="absolute -top-2 -right-2 w-8 h-8 border-t-2 border-r-2 border-primary" />
+                <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-primary" />
+                <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-primary" />
+              </div>
+            </div>
+            
+            {/* Camera icon in top right */}
+            <div className="absolute top-3 right-3">
+              <div className="bg-background/80 backdrop-blur-sm rounded-full p-2">
+                <Camera className="h-5 w-5 text-muted-foreground" />
               </div>
             </div>
           </div>
@@ -97,7 +110,7 @@ export default function FaceRegistrationCard({ userId }: FaceRegistrationCardPro
             <Button
               onClick={() => setShowRegisterDialog(true)}
               variant={isRegistered ? "outline" : "default"}
-              className="flex-1"
+              className={`flex-1 ${!isRegistered ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
             >
               {isRegistered ? 'Update Face' : 'Register Face'}
             </Button>

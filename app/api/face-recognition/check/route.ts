@@ -20,8 +20,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      registered: !!faceEmbedding,
-      lastUpdated: faceEmbedding?.updatedAt || null
+      hasRegistered: !!faceEmbedding,
+      registeredAt: faceEmbedding?.createdAt || null,
+      updatedAt: faceEmbedding?.updatedAt || null
     });
   } catch (error) {
     console.error('Error checking face registration:', error);
