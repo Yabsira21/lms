@@ -294,8 +294,9 @@ export async function enrollInCourseAction(
         // callback_url: `http://localhost:3000/api/webhook/chapa`,
         return_url: `${env.BETTER_AUTH_URL}/payment/success`,
         customization: {
-          title: course.title || "Course Payment",
-          description: `Payment for ${course.title}`.substr(0, 100),
+          title: "Course Payment",
+          // title: course.title || "Course Payment",
+          description: `Payment for ${course.title[0]}`.substr(0, 100),
         },
         meta: {
           userId: user.id,

@@ -22,11 +22,13 @@ model User {
   courses       Course[]
   enrollment    Enrollment[]
   lessonProgress LessonProgress[]
+  documents Document[]
 
   role      String?   @default("user")
 	banned    Boolean   @default(false)
 	banReason String?
 	banExpires DateTime?
+
 
   @@map("user")
 }
@@ -188,6 +190,30 @@ model LessonProgress {
   lessonId String
 
   @@unique([userId, lessonId])
+}
 
+model Document {
+  id          String   @id @default(uuid())
+  title       String
+  content     String?
+  icon        String?
+  coverImage  String?
 
+  isArchived  Boolean  @default(false)
+  isPublished Boolean  @default(false)
+
+  // owner
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Notion-style hierarchy (self relation)
+  parentId    String?
+  parent      Document?  @relation("DocumentTree", fields: [parentId], references: [id])
+  children    Document[] @relation("DocumentTree")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, parentId])
 }
