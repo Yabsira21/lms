@@ -34,13 +34,17 @@ export function Navbar() {
 
         <nav className="hidden md:flex md:flex-1 md:items-center md:justify-between">
           <div className="flex itmes-center space-x-2">
-            {["Home", "Courses", "Dashboard"].map((name) => (
+            {[
+              { name: "Home", href: "/" },
+              { name: "Courses", href: "/courses" },
+              { name: "Dashboard", href: "/dashboard" }
+            ].map((item) => (
               <Link
-                key={name}
-                href={`/${name.toLowerCase()}`}
+                key={item.name}
+                href={item.href}
                 className="text-sm font-medium transition-colors hover:text-primary px-3 py-2 rounded-md"
               >
-                {name}
+                {item.name}
               </Link>
             ))}
           </div>

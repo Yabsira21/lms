@@ -138,14 +138,28 @@ class FaceRecognitionService {
     imageUrl?: string
   ): Promise<FaceEmbedding> {
     try {
+      console.log('Attempting to save face embedding for user:', userId);
+      console.log('Embedding length:', embedding.length);
+      
+      // Validate inputs
+      if (!userId || typeof userId !== 'string') {
+        throw new Error('Invalid userId provided');
+      }
+      
+      if (!Array.isArray(embedding) || embedding.length === 0) {
+        throw new Error('Invalid embedding provided');
+      }
+
       // Check if embedding already exists for user
       const existing = await prisma.faceEmbedding.findUnique({
         where: { userId },
       });
 
       const embeddingJson = JSON.stringify(embedding);
+      console.log('Embedding JSON length:', embeddingJson.length);
 
       if (existing) {
+        console.log('Updating existing embedding for user:', userId);
         // Update existing embedding
         const updated = await prisma.faceEmbedding.update({
           where: { userId },
@@ -165,6 +179,7 @@ class FaceRecognitionService {
           updatedAt: updated.updatedAt,
         };
       } else {
+        console.log('Creating new embedding for user:', userId);
         // Create new embedding
         const created = await prisma.faceEmbedding.create({
           data: {
@@ -174,6 +189,7 @@ class FaceRecognitionService {
           },
         });
 
+        console.log('Successfully created embedding with ID:', created.id);
         return {
           id: created.id,
           userId: created.userId,
@@ -185,7 +201,12 @@ class FaceRecognitionService {
       }
     } catch (error) {
       console.error('Error saving face embedding:', error);
-      throw new Error('Failed to save face embedding');
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      throw new Error(`Failed to save face embedding: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
