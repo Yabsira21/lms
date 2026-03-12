@@ -9,22 +9,25 @@ datasource db {
 }
 
 model User {
-  id            String    @id
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  courses       Course[]
-  faceEmbedding FaceEmbedding?
-  Attendance    Attendance[]
+  id             String           @id
+  name           String
+  email          String           @unique
+  emailVerified  Boolean          @default(false)
+  image          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  accounts       Account[]
+  sessions       Session[]
+  courses        Course[]
+  enrollment     Enrollment[]
+  lessonProgress LessonProgress[]
+  documents      Document[]
+  faceEmbedding  FaceEmbedding?
+  Attendance     Attendance[]
 
-  role      String?   @default("user")
-  banned    Boolean   @default(false)
-  banReason String?
+  role       String?   @default("user")
+  banned     Boolean   @default(false)
+  banReason  String?
   banExpires DateTime?
 
   @@map("user")
@@ -100,8 +103,9 @@ model Course {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
 
-  chapters Chapter[]
-  Class    Class[]
+  chapters   Chapter[]
+  enrollment Enrollment[]
+  Class      Class[]
 }
 
 enum CourseLevel {
@@ -133,22 +137,87 @@ model Chapter {
 model Lesson {
   id String @id @default(uuid())
 
-  title       String
-  description     String?
+  title        String
+  description  String?
   thumbnailKey String?
-  videoKey    String?
-  position    Int
+  videoKey     String?
+  position     Int
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  chapter        Chapter          @relation(fields: [chapterId], references: [id])
+  chapterId      String
+  lessonProgress LessonProgress[]
+}
+
+model Enrollment {
+  id String @id @default(uuid())
+
+  amount Int
+  status EnrollmentStatus @default(Pending)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  chapter   Chapter  @relation(fields: [chapterId], references: [id])
-  chapterId String
+
+  Course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId String
+
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@unique([userId, courseId])
+}
+
+enum EnrollmentStatus {
+  Pending
+  Active
+  Cancelled
+}
+
+model LessonProgress {
+  id String @id @default(uuid())
+
+  completed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  User     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  Lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId String
+
+  @@unique([userId, lessonId])
+}
+
+model Document {
+  id         String  @id @default(uuid())
+  title      String
+  content    String?
+  icon       String?
+  coverImage String?
+
+  isArchived  Boolean @default(false)
+  isPublished Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  parentId String?
+  parent   Document?  @relation("DocumentTree", fields: [parentId], references: [id])
+  children Document[] @relation("DocumentTree")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, parentId])
 }
 
 model FaceEmbedding {
   id        String   @id @default(uuid())
   userId    String   @unique
-  embedding String   // JSON string of number array
+  embedding String // JSON string of number array
   imageUrl  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -12,11 +12,17 @@ import {
 } from "@/components/ui/shadcn-io/theme-toggle-button";
 
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export function Navbar() {
   const { data: session, isPending } = authClient.useSession();
   const { theme, setTheme } = useTheme();
   const { startTransition } = useThemeTransition();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleTheme = () => {
     startTransition(() => {
@@ -50,12 +56,13 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <ThemeToggleButton
-              theme={theme === "light" ? "light" : "dark"}
-              variant="circle"
-              // start="center"
-              onClick={toggleTheme}
-            />
+            {mounted && (
+              <ThemeToggleButton
+                theme={theme === "light" ? "light" : "dark"}
+                variant="circle"
+                onClick={toggleTheme}
+              />
+            )}
 
             {isPending ? null : session ? (
               <UserDropDown

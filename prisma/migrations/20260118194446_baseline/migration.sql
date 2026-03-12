@@ -1,5 +1,3 @@
-yarn run v1.22.22
-$ /home/devb/Documents/e-learning/lms/node_modules/.bin/prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script
 -- CreateEnum
 CREATE TYPE "CourseLevel" AS ENUM ('Beginner', 'Intermediate', 'Advanced');
 
@@ -194,5 +192,3 @@ ALTER TABLE "LessonProgress" ADD CONSTRAINT "LessonProgress_userId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "LessonProgress" ADD CONSTRAINT "LessonProgress_lessonId_fkey" FOREIGN KEY ("lessonId") REFERENCES "Lesson"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
-Done in 2.10s.

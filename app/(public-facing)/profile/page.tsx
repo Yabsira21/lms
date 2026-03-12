@@ -1,17 +1,15 @@
 import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import ProfileContent from './_components/ProfileContent';
 
 export default async function ProfilePage() {
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: await import('next/headers').then(h => h.headers())
   });
 
   if (!session) {
-    return redirect('/login');
+    redirect('/login');
   }
 
   return <ProfileContent user={session.user} />;
 }
-

@@ -52,7 +52,7 @@ export default function FaceRegistrationCard({ userId }: FaceRegistrationCardPro
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />
-            Face Recognition
+            Face Registration
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
