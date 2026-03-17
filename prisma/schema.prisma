@@ -30,6 +30,10 @@ model User {
   banReason  String?
   banExpires DateTime?
 
+  liveClasses LiveClass[] @relation("InstructorLiveClasses")     // instructor's classes
+  liveEnrollments LiveEnrollment[] // students enrolled in live classes
+  messages        Message[]        // chat messages 
+
   @@map("user")
 }
 
@@ -231,10 +235,15 @@ model Attendance {
   id           String   @id
   userId       String
   classId      String
-  recognizedAt DateTime @default(now())
-  confidence   Float
+
+  joinedAt     DateTime @default(now())   // 🔥 better than recognizedAt
+  leftAt       DateTime?
+
+  confidence   Float?
   verified     Boolean  @default(false)
+
   createdAt    DateTime @default(now())
+
   Class        Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -243,20 +252,111 @@ model Attendance {
   @@index([userId])
 }
 
+model LiveClass {
+  id               String       @id @default(uuid())
+  title            String
+  slug             String       @unique
+  smallDescription String
+  description      String       @db.Text
+  thumbnailKey     String?
+
+  price            Int
+  category         String
+  status           CourseStatus @default(Draft)
+
+  // Scheduling rules
+  startDate        DateTime
+  durationWeeks    Int
+  frequencyPerWeek Int
+  daysOfWeek       String[]
+  startTime        String
+  sessionDuration  Int
+
+  maxStudents      Int?
+
+  instructorId String
+  instructor   User @relation("InstructorLiveClasses", fields: [instructorId], references: [id])
+
+  classes          Class[]      // 👈 connect to his Class
+
+  enrollments      LiveEnrollment[]
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([instructorId])
+}
+
 model Class {
-  id          String       @id
+ id String @id @default(uuid())
   title       String
   description String?
-  courseId    String
+
+  // NEW: link to LiveClass (parent program)
+  liveClassId String?
+  liveClass   LiveClass?   @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+
+  courseId    String?      // keep if needed dk
+  Course      Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
   startTime   DateTime
   endTime     DateTime?
+
+  // 🔥 LiveKit integration
+  meetingId   String?      @unique
+  isLive      Boolean      @default(false)
+
   status      ClassStatus  @default(Scheduled)
+
   createdAt   DateTime     @default(now())
-  updatedAt   DateTime
+  updatedAt   DateTime     @updatedAt
+
   Attendance  Attendance[]
-  Course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // ➕ NEW FEATURES
+  messages    Message[]
+  resources   ClassResource[]
 
   @@index([courseId])
+  @@index([liveClassId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model ClassResource {
+  id        String   @id @default(uuid())
+  title     String
+  fileUrl   String
+
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+model LiveEnrollment {
+  id          String           @id @default(uuid())
+  amount      Int
+  status      EnrollmentStatus @default(Pending)
+
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  liveClassId String
+  liveClass   LiveClass        @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime         @default(now())
+
+  @@unique([userId, liveClassId])
 }
 
 enum ClassStatus {
