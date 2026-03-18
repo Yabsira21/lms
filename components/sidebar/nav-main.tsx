@@ -7,6 +7,8 @@ import {
   IconSettings,
   IconHelp,
   IconSearch,
+  IconBook,
+  IconLivePhotoFilled,
   // Import all icons you might use
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +30,8 @@ const iconMap = {
   IconHelp: IconHelp,
   IconSearch: IconSearch,
   IconCirclePlusFilled: IconCirclePlusFilled,
+  IconBook: IconBook,
+  IconLivePhotoFilled: IconLivePhotoFilled,
   // Add more as needed
 } as const;
 
@@ -75,7 +79,7 @@ export function NavMain({
                     href={item.url}
                     className={cn(
                       pathname === item.url &&
-                        "bg-accent text-accent-foreground"
+                        "bg-accent text-accent-foreground",
                     )}
                   >
                     {IconComponent && (

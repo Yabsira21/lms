@@ -47,12 +47,12 @@ const data = {
     {
       title: "Courses",
       url: "/admin/courses",
-      icon: "IconListDetails", // Changed to string
+      icon: "IconBook", // Changed to string
     },
     {
       title: "Live Classes",
       url: "/admin/live-class",
-      icon: "IconListDetails", // Changed to string
+      icon: "IconLivePhotoFilled", // Changed to string
     },
   ],
   navClouds: [

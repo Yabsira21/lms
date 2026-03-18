@@ -26,74 +26,79 @@ export const weekDays = [
   "Sunday",
 ] as const;
 
-export const liveClassSchema = z
-  .object({
-    title: z
-      .string()
-      .min(3, "Title must be at least 3 characters")
-      .max(100, "Title is too long"),
+export const liveClassSchema = z.object({
+  title: z
+    .string()
+    .min(3, "Title must be at least 3 characters")
+    .max(100, "Title is too long"),
 
-    slug: z.string().min(3, "Slug is required"),
+  slug: z.string().min(3, "Slug is required"),
 
-    smallDescription: z
-      .string()
-      .min(3)
-      .max(200, "Small description should be concise"),
+  thumbnailKey: z.string().min(1, { message: "File key is required" }),
 
-    description: z.string().min(10, "Please provide a detailed description"),
+  smallDescription: z
+    .string()
+    .min(3)
+    .max(200, "Small description should be concise"),
 
-    category: z.enum(courseCategories, {
-      message: "Category is required",
-    }),
+  description: z.string().min(10, "Please provide a detailed description"),
 
-    // Pricing for the entire cohort
-    price: z.coerce.number().min(1, "Price must be at least 1"),
+  category: z.enum(courseCategories, {
+    message: "Category is required",
+  }),
 
-    startDate: z.coerce.date({
-      error: (issue) => {
-        // If the input is missing (undefined/null), it's a "required" error
-        if (issue.input === undefined) return "Please select a start date";
-        // Otherwise, handle it as a general invalid type/date
-        return "That's not a valid date!";
-      },
-    }),
+  // Pricing for the entire cohort
+  price: z.coerce.number().min(1, "Price must be at least 1"),
 
-    durationInWeeks: z.coerce
-      .number()
-      .min(1, "Minimum duration is 1 week")
-      .max(52, "Maximum duration is 1 year"),
+  startDate: z.coerce.date({
+    error: (issue) => {
+      // If the input is missing (undefined/null), it's a "required" error
+      if (issue.input === undefined) return "Please select a start date";
+      // Otherwise, handle it as a general invalid type/date
+      return "That's not a valid date!";
+    },
+  }),
 
-    frequencyPerWeek: z.coerce
-      .number()
-      .min(1, "At least 1 session per week")
-      .max(7, "Cannot exceed 7 sessions per week"),
+  durationWeeks: z.coerce
+    .number()
+    .min(1, "Minimum duration is 1 week")
+    .max(52, "Maximum duration is 1 year"),
 
-    // Which specific days the class meets
-    daysOfWeek: z
-      .array(z.enum(weekDays))
-      .min(1, "Select at least one day of the week"),
+  // frequencyPerWeek: z.coerce
+  //   .number()
+  //   .min(1, "At least 1 session per week")
+  //   .max(7, "Cannot exceed 7 sessions per week"),
 
-    // Time management
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
-      message: "Invalid time format (HH:MM)",
-    }),
+  // Which specific days the class meets
+  daysOfWeek: z
+    .array(z.enum(weekDays))
+    .min(1, "Select at least one day of the week"),
 
-    sessionDuration: z.coerce
-      .number()
-      .min(15, "Sessions must be at least 15 minutes")
-      .max(480, "Sessions cannot exceed 8 hours"),
+  // Time management
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: "Invalid time format (HH:MM)",
+  }),
 
-    maxStudents: z.coerce
-      .number()
-      .min(1, "Must allow at least 1 student")
-      .optional(),
+  sessionDuration: z.coerce
+    .number()
+    .min(15, "Sessions must be at least 15 minutes")
+    .max(480, "Sessions cannot exceed 8 hours"),
 
-    status: z.enum(courseStatus).default("Draft"),
-  })
-  .refine((data) => data.daysOfWeek.length === data.frequencyPerWeek, {
-    message: "Selected days must match the frequency per week",
-    path: ["daysOfWeek"],
-  });
+  maxStudents: z.coerce
+    .number()
+    .min(1, "Must allow at least 1 student")
+    .optional(),
+
+  status: z.enum(courseStatus).default("Draft"),
+
+  instructorId: z
+    .string()
+    .min(1, { message: "Instructor ID must be a valid UUID" }),
+});
+// .refine((data) => data.daysOfWeek.length === data.frequencyPerWeek, {
+//   message: "Selected days must match the frequency per week",
+//   path: ["daysOfWeek"],
+// });
 
 export const courseSchema = z.object({
   title: z

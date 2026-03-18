@@ -267,7 +267,6 @@ model LiveClass {
   // Scheduling rules
   startDate        DateTime
   durationWeeks    Int
-  frequencyPerWeek Int
   daysOfWeek       String[]
   startTime        String
   sessionDuration  Int
