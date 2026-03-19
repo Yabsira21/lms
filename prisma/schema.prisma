@@ -276,7 +276,7 @@ model LiveClass {
   instructorId String
   instructor   User @relation("InstructorLiveClasses", fields: [instructorId], references: [id])
 
-  classes          Class[]      // 👈 connect to his Class
+  classes          Class[]      
 
   enrollments      LiveEnrollment[]
 
