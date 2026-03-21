@@ -43,7 +43,8 @@ export function Navbar() {
             {[
               { name: "Home", href: "/" },
               { name: "Courses", href: "/courses" },
-              { name: "Dashboard", href: "/dashboard" }
+              { name: "Dashboard", href: "/dashboard" },
+              { name: "Live Classes", href: "/live-classes" },
             ].map((item) => (
               <Link
                 key={item.name}

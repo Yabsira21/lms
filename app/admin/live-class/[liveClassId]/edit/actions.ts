@@ -47,7 +47,7 @@ export async function editLiveClass(
     await prisma.liveClass.update({
       where: {
         id: liveClassId,
-        instructorId: session.user.id,
+        // instructorId: session.user.id,
       },
       data: {
         ...result.data,

@@ -17,12 +17,13 @@ const aj = arcjet.withRule(
   }),
 );
 
-export async function enrollInCourseAction(
-  courseId: string,
+export async function enrollInLiveClassAction(
+  liveClassId: string,
 ): Promise<APIResponse | never> {
   const user = await requireUser();
 
   let checkoutURL: string;
+
   try {
     const req = await request();
     const decision = await aj.protect(req, {
@@ -32,35 +33,56 @@ export async function enrollInCourseAction(
     if (decision.isDenied()) {
       return {
         status: "error",
-        message: "You have been blocked",
+        message: "Too many requests. Please try again later.",
       };
     }
 
-    const course = await prisma.course.findUnique({
+    const liveClass = await prisma.liveClass.findUnique({
       where: {
-        id: courseId,
+        id: liveClassId,
       },
       select: {
         id: true,
         title: true,
         price: true,
         slug: true,
+        maxStudents: true,
+        _count: {
+          select: {
+            enrollments: {
+              where: {
+                status: "Active",
+              },
+            },
+          },
+        },
       },
     });
 
-    if (!course) {
+    if (!liveClass) {
       return {
         status: "error",
-        message: "Course not found",
+        message: "Live class not found",
+      };
+    }
+
+    // Check if class is full
+    if (
+      liveClass.maxStudents &&
+      liveClass._count.enrollments >= liveClass.maxStudents
+    ) {
+      return {
+        status: "error",
+        message: "This class is full",
       };
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const exisitingEnrollement = await tx.enrollment.findUnique({
+      const existingEnrollment = await tx.liveEnrollment.findUnique({
         where: {
-          userId_courseId: {
+          userId_liveClassId: {
             userId: user.id,
-            courseId: courseId,
+            liveClassId: liveClassId,
           },
         },
         select: {
@@ -69,29 +91,29 @@ export async function enrollInCourseAction(
         },
       });
 
-      if (exisitingEnrollement?.status === "Active") {
-        redirect(`/courses/${course.slug}`);
+      if (existingEnrollment?.status === "Active") {
+        redirect(`/live-class/${liveClass.slug}`);
       }
 
       let enrollment;
 
-      if (exisitingEnrollement) {
-        enrollment = await tx.enrollment.update({
+      if (existingEnrollment) {
+        enrollment = await tx.liveEnrollment.update({
           where: {
-            id: exisitingEnrollement.id,
+            id: existingEnrollment.id,
           },
           data: {
-            amount: course.price,
+            amount: liveClass.price,
             status: "Pending",
-            updatedAt: new Date(),
+            // updatedAt: new Date(),
           },
         });
       } else {
-        enrollment = await tx.enrollment.create({
+        enrollment = await tx.liveEnrollment.create({
           data: {
             userId: user.id,
-            courseId: course.id,
-            amount: course.price,
+            liveClassId: liveClass.id,
+            amount: liveClass.price,
             status: "Pending",
           },
         });
@@ -100,29 +122,26 @@ export async function enrollInCourseAction(
       // Generate tx_ref from enrollment ID
       const txRef = `${enrollment.id}-${Date.now()}`;
 
-      // Prepare customization
-
       const chapaData = {
-        amount: course.price.toString(),
+        amount: liveClass.price.toString(),
         currency: "ETB",
         email: user.email,
         first_name: user.name?.trim().substr(0, 50) || "User",
         last_name: ".",
         tx_ref: txRef,
-        callback_url: `${env.NGROK_URL}/api/webhook/chapa`,
+        callback_url: `${env.NGROK_URL}/api/webhook/chapa-live`,
         return_url: `${env.BETTER_AUTH_URL}/payment/success`,
         customization: {
-          title: "Course Payment",
-          description: `Payment for ${course.title[0]}`.substr(0, 100),
+          title: "Class Payment",
+          description: `Payment for ${liveClass.title}`.substr(0, 100),
         },
         meta: {
           userId: user.id,
-          courseId: course.id,
+          liveClassId: liveClass.id,
           enrollmentId: enrollment.id,
+          type: "live-class",
         },
       };
-
-      // console.log("Sending to Chapa:", JSON.stringify(chapaData, null, 2));
 
       const response = await axios.post(
         "https://api.chapa.co/v1/transaction/initialize",
@@ -148,7 +167,7 @@ export async function enrollInCourseAction(
 
     checkoutURL = result.checkoutUrl as string;
   } catch (error: any) {
-    console.error("Error in enrollInCourseAction:", error);
+    console.error("Error in enrollInLiveClassAction:", error);
 
     if (error.response) {
       console.error("Chapa API error response:", error.response.data);
@@ -161,7 +180,7 @@ export async function enrollInCourseAction(
     }
 
     if (error.message?.includes("redirect")) {
-      throw error; // Re-throw redirect errors
+      throw error;
     }
 
     return {

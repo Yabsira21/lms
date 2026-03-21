@@ -74,7 +74,7 @@ export const InstructorSelector = ({
       </DialogTrigger>
 
       {/* Centered Modal */}
-      <DialogContent className="max-w-md p-0 rounded-xl overflow-hidden bg-neutral-900 [&>button]:hidden">
+      <DialogContent className="max-w-md p-0 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 [&>button]:hidden">
         <div className="p-2">
           {/* Search Input */}
           <div className="flex items-center rounded-md border-white/15 border mx-2 my-1.5 px-3 py-0 bg-popover">

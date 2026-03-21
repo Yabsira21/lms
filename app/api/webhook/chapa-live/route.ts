@@ -1,5 +1,3 @@
-// export async function POST() {}
-
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 import crypto from "crypto";
@@ -10,48 +8,20 @@ function verifyChapaSignature(
   secret: string,
   rawBody: string,
 ): boolean {
-  // Get the signatures from the headers
   const chapaSignature = req.headers.get("chapa-signature");
   const xChapaSignature = req.headers.get("x-chapa-signature");
 
-  // Calculate the expected hash
   const expectedHash = crypto
     .createHmac("sha256", secret)
     .update(rawBody)
     .digest("hex");
 
-  // The webhook is valid if EITHER header matches the expected hash
   return chapaSignature === expectedHash || xChapaSignature === expectedHash;
 }
 
-// export async function POST(request: NextRequest) {
-//   console.log("wow xoxo");
-//   const rawBody = await request.text();
-
-//   console.log(`rawBody: ${rawBody}`);
-
-//   // Verify the signature
-//   if (!verifyChapaSignature(request, env.CHAPA_SECRET_HASH, rawBody)) {
-//     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-//   }
-
-//   // Process the webhook...
-//   const event = JSON.parse(rawBody);
-
-//   console.log(`event: ${event}`);
-
-//   //   try {
-//   //   } catch {
-//   //     return new Response("Webhook error", { status: 400 });
-//   //   }
-
-//   //   const session = event.data.object;
-//   // Your processing logic here
-// }
-
 export async function GET(request: NextRequest) {
-  console.log("Received GET request at Chapa webhook endpoint");
-  // 1️⃣ Extract trx_ref from query params
+  console.log("Received GET request at Chapa Live webhook endpoint");
+
   const url = new URL(request.url);
   const trxRef = url.searchParams.get("trx_ref");
 
@@ -60,7 +30,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 2️⃣ Call Chapa verify API (SERVER → SERVER)
+    // Verify transaction with Chapa
     const verifyResponse = await fetch(
       `https://api.chapa.co/v1/transaction/verify/${trxRef}`,
       {
@@ -74,41 +44,53 @@ export async function GET(request: NextRequest) {
     );
 
     const data = await verifyResponse.json();
+    console.log("Chapa verify response for live class:", data);
 
-    // 3️⃣ Print result (for debugging)
-    console.log("Chapa verify response:", data);
-
-    if (data.data.status == "success") {
-      const courseId = data.data.meta?.courseId;
+    if (data.status === "success" && data.data?.status === "success") {
+      const liveClassId = data.data.meta?.liveClassId;
       const userId = data.data.meta?.userId;
+      const enrollmentId = data.data.meta?.enrollmentId;
 
-      if (!courseId) {
-        throw new Error("Course not found...");
+      if (!liveClassId || !userId || !enrollmentId) {
+        throw new Error("Missing required meta data");
       }
 
+      // Check if user exists
       const user = await prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
+        where: { id: userId },
       });
 
       if (!user) {
-        throw new Error("User not found...");
+        throw new Error("User not found");
       }
 
-      await prisma.enrollment.update({
+      // Check if live class exists
+      const liveClass = await prisma.liveClass.findUnique({
+        where: { id: liveClassId },
+      });
+
+      if (!liveClass) {
+        throw new Error("Live class not found");
+      }
+
+      // Update enrollment to Active
+      await prisma.liveEnrollment.update({
         where: {
-          id: data.data.meta?.enrollmentId as string,
+          id: enrollmentId,
         },
         data: {
           userId: user.id,
-          courseId: courseId,
-          amount: data.data.amount as number,
+          liveClassId: liveClassId,
+          amount: data.data.amount,
           status: "Active",
         },
       });
+
+      console.log(
+        `Successfully enrolled user ${userId} in live class ${liveClassId}`,
+      );
     }
-    // 4️⃣ Return minimal safe response
+
     return NextResponse.json(
       {
         verified: true,
@@ -117,7 +99,7 @@ export async function GET(request: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error verifying Chapa transaction:", error);
+    console.error("Error verifying Chapa live class transaction:", error);
 
     return NextResponse.json(
       { error: "Failed to verify transaction" },

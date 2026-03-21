@@ -55,7 +55,7 @@ export function EditLiveClassForm({ data }: iAppProps) {
   const [isPending, startTransition] = useTransition();
   const [openDays, setOpenDays] = useState(false);
   const [selectedInstructorName, setSelectedInstructorName] = useState(
-    data.instructor.name,
+    "Select a new instructor",
   );
   const router = useRouter();
 
@@ -208,7 +208,7 @@ export function EditLiveClassForm({ data }: iAppProps) {
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
                   </FormControl>
@@ -220,150 +220,6 @@ export function EditLiveClassForm({ data }: iAppProps) {
                     ))}
                   </SelectContent>
                 </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="instructorId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Instructor</FormLabel>
-                <FormControl>
-                  <InstructorSelector
-                    selectedInstructor={{
-                      id: field.value,
-                      name: selectedInstructorName,
-                    }}
-                    onSelect={(ins) => {
-                      field.onChange(ins.id);
-                      setSelectedInstructorName(ins.name);
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="daysOfWeek"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Class Days</FormLabel>
-                <div className="relative">
-                  <div
-                    onClick={() => setOpenDays(!openDays)}
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm cursor-pointer"
-                  >
-                    <span className="text-muted-foreground">
-                      {field.value?.length
-                        ? field.value.length <= 3
-                          ? field.value.join(", ")
-                          : `${field.value.slice(0, 3).join(", ")} +${field.value.length - 3}`
-                        : "Select days"}
-                    </span>
-                    <span>▾</span>
-                  </div>
-
-                  {openDays && (
-                    <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-md p-1">
-                      {weekDays.map((day) => {
-                        const selected = field.value?.includes(day);
-                        return (
-                          <div
-                            key={day}
-                            onClick={() => {
-                              let newValue = field.value || [];
-                              if (selected) {
-                                newValue = newValue.filter((d) => d !== day);
-                              } else {
-                                if (newValue.length >= 7) return;
-                                newValue = [...newValue, day];
-                              }
-                              field.onChange(newValue);
-                              form.setValue(
-                                "frequencyPerWeek",
-                                newValue.length,
-                              );
-                            }}
-                            className={`flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm ${
-                              selected
-                                ? "bg-accent text-accent-foreground"
-                                : "hover:bg-accent hover:text-accent-foreground"
-                            }`}
-                          >
-                            <div className="mr-2 flex h-4 w-4 items-center">
-                              {selected && <Check className="h-4 w-4" />}
-                            </div>
-                            {day}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="startDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Start Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date < new Date()}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="durationWeeks"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Number of Weeks</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={52}
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
@@ -378,41 +234,7 @@ export function EditLiveClassForm({ data }: iAppProps) {
                   <Input
                     type="number"
                     placeholder="Price"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="startTime"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Start Time</FormLabel>
-                <FormControl>
-                  <Input type="time" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="sessionDuration"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Session Duration (minutes)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min={15}
-                    max={480}
-                    {...field}
+                    // value={field.value ?? ""}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
@@ -430,49 +252,73 @@ export function EditLiveClassForm({ data }: iAppProps) {
                 <FormControl>
                   <Input
                     type="number"
+                    placeholder="Enter max students"
                     min={1}
                     max={50}
-                    {...field}
-                    value={field.value || ""}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    value={field.value as number | undefined}
+                    onChange={(e) => {
+                      let value = Number(e.target.value);
+                      if (value < 1) value = 1;
+                      if (value > 50) value = 50;
+                      field.onChange(value);
+                    }}
+                    onBlur={field.onBlur}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {courseStatus.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Value" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {courseStatus.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="instructorId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Instructor</FormLabel>
+              <FormControl>
+                <InstructorSelector
+                  selectedInstructor={{
+                    id: field.value,
+                    name: selectedInstructorName,
+                  }}
+                  onSelect={(ins) => {
+                    field.onChange(ins.id);
+                    setSelectedInstructorName(ins.name);
+                  }}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Hidden field for frequencyPerWeek */}
-        <input type="hidden" {...form.register("frequencyPerWeek")} />
+        {/* <input type="hidden" {...form.register("frequencyPerWeek")} /> */}
 
         <Button type="submit" disabled={isPending}>
           {isPending ? (
