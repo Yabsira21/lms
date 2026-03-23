@@ -8,17 +8,22 @@ import {
   ClockIcon,
   UserIcon,
   UsersIcon,
-  VideoIcon,
   ChevronRight,
+  MessageCircle,
+  InfoIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 interface LiveClassSidebarProps {
   liveClass: LiveClassSideDataType["liveClass"];
+  liveClassId: string;
 }
 
-export function LiveClassSidebar({ liveClass }: LiveClassSidebarProps) {
+export function LiveClassSidebar({
+  liveClass,
+  liveClassId,
+}: LiveClassSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -53,6 +58,36 @@ export function LiveClassSidebar({ liveClass }: LiveClassSidebarProps) {
         </div>
       </div>
 
+      {/* Navigation Tabs */}
+      <div className="border-b">
+        <div className="flex">
+          <Link
+            href={`/dashboard/liveclass/${liveClass.slug}`}
+            className={cn(
+              "flex-1 px-3 py-2 text-sm font-medium text-center transition-colors",
+              pathname === `/dashboard/liveclass/${liveClass.slug}`
+                ? "border-b-2 border-primary text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <InfoIcon className="size-4 inline mr-2" />
+            Info
+          </Link>
+          <Link
+            href={`/dashboard/liveclass/${liveClass.slug}/chat`}
+            className={cn(
+              "flex-1 px-3 py-2 text-sm font-medium text-center transition-colors",
+              pathname.includes("/chat")
+                ? "border-b-2 border-primary text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <MessageCircle className="size-4 inline mr-2" />
+            Group Chat
+          </Link>
+        </div>
+      </div>
+
       {/* Sessions List */}
       <div className="flex-1 overflow-y-auto py-4">
         <div className="px-3 mb-2">
@@ -68,7 +103,7 @@ export function LiveClassSidebar({ liveClass }: LiveClassSidebarProps) {
               const sessionDate = new Date(session.startTime);
               const now = new Date();
               const isSoon =
-                sessionDate.getTime() - now.getTime() < 30 * 60 * 1000; // 30 minutes
+                sessionDate.getTime() - now.getTime() < 30 * 60 * 1000;
 
               return (
                 <Link
@@ -110,8 +145,7 @@ export function LiveClassSidebar({ liveClass }: LiveClassSidebarProps) {
 
       {/* Footer */}
       <div className="p-4 border-t text-xs text-muted-foreground">
-        <p>Class ID: {liveClass.id.slice(0, 8)}...</p>
-        <p className="mt-1">Total sessions: {liveClass._count.classes}</p>
+        <p>Total sessions: {liveClass._count.classes}</p>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
-// import { LiveClassSidebar } from "../../_components/LiveClassSidebar";
-import { getLiveClassSidebarData } from "@/app/data/live-class/get-live-class-sidebar-data";
 import { LiveClassSidebar } from "../../_components/LiveClassSidebar";
+import { getLiveClassSidebarData } from "@/app/data/live-class/get-live-class-sidebar-data";
 
 interface iAppProps {
   params: Promise<{ slug: string }>;
@@ -10,7 +9,6 @@ interface iAppProps {
 
 export default async function LiveClassLayout({ children, params }: iAppProps) {
   const { slug } = await params;
-
   const { liveClass } = await getLiveClassSidebarData(slug);
 
   return (
@@ -19,7 +17,10 @@ export default async function LiveClassLayout({ children, params }: iAppProps) {
         <div className="flex flex-1">
           {/* Sidebar - 300px width */}
           <div className="w-80 border-r border-border shrink-0">
-            <LiveClassSidebar liveClass={liveClass} />
+            <LiveClassSidebar
+              liveClass={liveClass}
+              liveClassId={liveClass.id}
+            />
           </div>
 
           {/* Main content */}

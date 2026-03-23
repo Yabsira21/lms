@@ -3,9 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Externalize face-api.js to prevent SSR bundling issues
   serverExternalPackages: [
-    'face-api.js',
-    '@tensorflow/tfjs',
-    '@tensorflow/tfjs-backend-webgl',
+    "face-api.js",
+    "@tensorflow/tfjs",
+    "@tensorflow/tfjs-backend-webgl",
   ],
   images: {
     remotePatterns: [
@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
         port: "",
         protocol: "https",
         // pathname: '/**',
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },
