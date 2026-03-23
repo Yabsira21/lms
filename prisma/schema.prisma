@@ -24,6 +24,7 @@ model User {
   documents      Document[]
   faceEmbedding  FaceEmbedding?
   Attendance     Attendance[]
+  AttendanceInterval AttendanceInterval[]
 
   role       String?   @default("user")
   banned     Boolean   @default(false)
@@ -304,6 +305,28 @@ model LiveClassMessage {
   @@index([createdAt])
 }
 
+model AttendanceInterval {
+  id           String                  @id @default(uuid())
+  userId       String
+  classId      String
+  intervalIndex Int                    // 0-based minute index
+  status       AttendanceIntervalStatus
+  confidence   Float?
+  timestamp    DateTime               @default(now())
+  createdAt    DateTime               @default(now())
+  Class        Class                  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, classId, intervalIndex])
+  @@index([classId])
+  @@index([userId])
+}
+
+enum AttendanceIntervalStatus {
+  VERIFIED
+  UNVERIFIED
+}
+
 model Class {
  id String @id @default(uuid())
   title       String
@@ -336,6 +359,7 @@ model Class {
 
   @@index([courseId])
   @@index([liveClassId])
+  attendanceIntervals AttendanceInterval[]
 }
 
 model Message {
@@ -379,6 +403,7 @@ model LiveEnrollment {
 enum ClassStatus {
   Scheduled
   Ongoing
+  Paused
   Completed
   Cancelled
 }

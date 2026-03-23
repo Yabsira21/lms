@@ -22,6 +22,11 @@ import FaceRecognition from '@/components/face-recognition/FaceRecognition';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 
+const ContinuousAttendanceWidget = dynamic(
+  () => import('@/components/attendance/ContinuousAttendanceWidget'),
+  { ssr: false }
+);
+
 const LiveSessionRoom = dynamic(
   () => import('@/components/livekit/LiveSessionRoom'),
   { ssr: false }
@@ -43,8 +48,19 @@ export default function StudentSessionView({ session, user }: StudentSessionView
   const [attendanceVerified, setAttendanceVerified] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [sessionStatus, setSessionStatus] = useState<'not-started' | 'ongoing' | 'ended'>('not-started');
-  const [elapsedTime, setElapsedTime] = useState(0);
+  const [sessionStatus, setSessionStatus] = useState<'not-started' | 'ongoing' | 'paused' | 'ended'>(() => {
+    if (session.status === 'Ongoing')   return 'ongoing';
+    if (session.status === 'Paused')    return 'paused';
+    if (session.status === 'Completed' || session.status === 'Cancelled') return 'ended';
+    return 'not-started';
+  });
+  const [elapsedTime, setElapsedTime] = useState<number>(() => {
+    // Seed from actual start time if session is already ongoing
+    if ((session.status === 'Ongoing' || session.status === 'Paused') && session.actualStartTime) {
+      return Math.floor((Date.now() - new Date(session.actualStartTime).getTime()) / 1000);
+    }
+    return 0;
+  });
   const [isLeaving, setIsLeaving] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -58,51 +74,67 @@ export default function StudentSessionView({ session, user }: StudentSessionView
   const roomName = `session-${session.id}`;
   const participantName = user.name || user.email;
 
-  // Poll session status from API
+  // Poll session status — syncs with instructor's Start / Pause / End actions
   useEffect(() => {
     const checkSessionStatus = async () => {
       try {
         const response = await fetch(`/api/session/${session.id}/status`);
-        if (response.ok) {
-          const data = await response.json();
-          setSessionStatus(data.status === 'Ongoing' ? 'ongoing' : data.status === 'Completed' ? 'ended' : 'not-started');
-        }
+        if (!response.ok) return;
+        const data = await response.json();
+
+        const map: Record<string, 'not-started' | 'ongoing' | 'paused' | 'ended'> = {
+          Scheduled:  'not-started',
+          Ongoing:    'ongoing',
+          Paused:     'paused',
+          Completed:  'ended',
+          Cancelled:  'ended',
+        };
+        const newStatus = map[data.status] ?? 'not-started';
+
+        setSessionStatus(prev => {
+          // Sync elapsed time from actualStartTime when transitioning into 'ongoing'
+          if (prev !== 'ongoing' && newStatus === 'ongoing' && data.actualStartTime) {
+            setElapsedTime(Math.floor((Date.now() - new Date(data.actualStartTime).getTime()) / 1000));
+          }
+          // Show toast on state changes
+          if (prev !== newStatus) {
+            if (newStatus === 'ongoing')  toast.success('Session started!');
+            if (newStatus === 'paused')   toast.info('Session paused by instructor');
+            if (newStatus === 'ended') {
+              toast.info('Session ended by instructor. Redirecting…');
+              setTimeout(() => router.push('/dashboard'), 3000);
+            }
+          }
+          return newStatus;
+        });
       } catch (error) {
         console.error('Error checking session status:', error);
       }
     };
 
     checkSessionStatus();
-    const interval = setInterval(checkSessionStatus, 5000); // Check every 5 seconds
+    const interval = setInterval(checkSessionStatus, 5000);
     return () => clearInterval(interval);
-  }, [session.id]);
+  }, [session.id, router]);
 
-  // Timer effect - only runs when session is ongoing
+  // Timer — only counts when session is 'ongoing', pauses on 'paused', resets on 'not-started'
   useEffect(() => {
     if (sessionStatus === 'ongoing') {
-      timerRef.current = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
+      timerRef.current = setInterval(() => setElapsedTime(prev => prev + 1), 1000);
     } else {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      if (sessionStatus === 'not-started') {
-        setElapsedTime(0);
-      }
+      if (sessionStatus === 'not-started') setElapsedTime(0);
     }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [sessionStatus]);
 
-  // Format time as HH:MM:SS
+  // Format time as HH:MM:SS — shows dashes when session hasn't started
   const formatTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
+    if (sessionStatus === 'not-started') return '--:--:--';
+    const hrs  = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -230,6 +262,11 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                         LIVE
                       </Badge>
                     )}
+                    {sessionStatus === 'paused' && (
+                      <Badge className="bg-yellow-500 text-white px-2 py-0.5 text-xs">
+                        PAUSED
+                      </Badge>
+                    )}
                     {sessionStatus === 'not-started' && (
                       <Badge variant="secondary" className="px-2 py-0.5 text-xs">
                         Not Started
@@ -254,7 +291,10 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                     {formatTime(elapsedTime)}
                   </div>
                   <span className="text-xs text-gray-500">
-                    {sessionStatus === 'ongoing' ? 'Session in progress' : sessionStatus === 'not-started' ? 'Waiting to start' : 'Session ended'}
+                    {sessionStatus === 'ongoing'     ? 'Session in progress' :
+                     sessionStatus === 'paused'      ? 'Session paused' :
+                     sessionStatus === 'not-started' ? 'Waiting to start' :
+                     'Session ended'}
                   </span>
                 </div>
               </div>
@@ -428,50 +468,12 @@ export default function StudentSessionView({ session, user }: StudentSessionView
               <div className="text-sm font-medium">Lecture Slides - Week 6.pdf</div>
             </div> */}
 
-            {/* Attendance Verification */}
-            <Card className="shadow-sm">
-              <div className="p-4">
-                <h3 className="font-semibold mb-3">Attendance Verification</h3>
-                
-                {attendanceVerified ? (
-                  <div className="space-y-3">
-                    <div className="flex justify-center">
-                      <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
-                        <CheckCircle2 className="h-10 w-10 text-white" />
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-1 text-sm font-medium mb-1">
-                        <span>Face detected</span>
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      </div>
-                      <p className="text-xs text-gray-600">Your attendance is being recorded.</p>
-                    </div>
-                    <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                      <img 
-                        src={user.image || `https://avatar.vercel.sh/${user.email}`}
-                        alt="User"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-                      <FaceRecognition
-                        classId={session.id}
-                        onRecognized={handleFaceRecognized}
-                        recognitionInterval={5000}
-                        autoStart={true}
-                      />
-                    </div>
-                    <p className="text-xs text-gray-600 text-center">
-                      Position your face in the camera to verify attendance
-                    </p>
-                  </div>
-                )}
-              </div>
-            </Card>
+            {/* Attendance Verification - Continuous 1-min polling */}
+            <ContinuousAttendanceWidget
+              classId={session.id}
+              userId={user.id}
+              sessionActive={sessionStatus === 'ongoing'}
+            />
 
             {/* Tabs */}
             <Card className="shadow-sm">

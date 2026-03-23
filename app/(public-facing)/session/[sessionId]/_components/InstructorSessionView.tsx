@@ -140,43 +140,52 @@ export default function InstructorSessionView({ session, user }: InstructorSessi
 
   // Start session
   const handleStartSession = async () => {
-    console.log('Starting session...', session.id);
-    
-    // Optimistically update UI first
+    const actualStartTime = new Date().toISOString();
     setSessionStatus('ongoing');
     toast.success('Session started!');
-    
+
     try {
-      // Update session status in database
       const response = await fetch(`/api/session/${session.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Ongoing' })
+        body: JSON.stringify({ status: 'Ongoing', actualStartTime })
       });
-
       if (!response.ok) {
-        const error = await response.json();
-        console.error('API error:', error);
         toast.error('Failed to update database, but session is running locally');
-      } else {
-        console.log('Session status updated in database');
       }
     } catch (error) {
       console.error('Error starting session:', error);
-      toast.error('Failed to update database, but session is running locally');
     }
   };
 
   // Pause session
-  const handlePauseSession = () => {
+  const handlePauseSession = async () => {
     setSessionStatus('paused');
     toast.info('Session paused');
+    try {
+      await fetch(`/api/session/${session.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Paused' })
+      });
+    } catch (err) {
+      console.error('Error pausing session:', err);
+    }
   };
 
   // Resume session
-  const handleResumeSession = () => {
+  const handleResumeSession = async () => {
     setSessionStatus('ongoing');
     toast.success('Session resumed');
+    try {
+      await fetch(`/api/session/${session.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Ongoing' })
+      });
+    } catch (err) {
+      console.error('Error resuming session:', err);
+    }
   };
 
   // End session
@@ -185,40 +194,33 @@ export default function InstructorSessionView({ session, user }: InstructorSessi
       return;
     }
 
-    console.log('Ending session...', session.id);
     setIsEndingSession(true);
-    
-    // Optimistically update UI
     setSessionStatus('ended');
-    toast.success('Session ended successfully');
-    
+
     try {
-      // Update session status in database
       const response = await fetch(`/api/session/${session.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           status: 'Completed',
           endTime: new Date().toISOString(),
           duration: elapsedTime
         })
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('API error:', error);
+      if (response.ok) {
+        toast.success('Session ended. Redirecting to attendance report…');
+        setTimeout(() => {
+          router.push(`/session/${session.id}/attendance`);
+        }, 2000);
       } else {
-        console.log('Session ended in database');
+        toast.error('Failed to end session in database');
+        setSessionStatus('ongoing');
       }
-      
-      // Redirect after 2 seconds regardless of API success
-      setTimeout(() => {
-        // For now, just stay on the page since we don't have a summary page
-        console.log('Would redirect to summary page');
-        // router.push(`/session/${session.id}/summary`);
-      }, 2000);
     } catch (error) {
       console.error('Error ending session:', error);
+      toast.error('Failed to end session');
+      setSessionStatus('ongoing');
     } finally {
       setIsEndingSession(false);
     }
@@ -914,11 +916,10 @@ function InstructorSessionContent({
                     variant="default"
                     size="sm"
                     className="flex-1 gap-2 bg-orange-500 hover:bg-orange-600"
-                    onClick={handleExport}
-                    disabled={isExporting}
+                    onClick={() => window.open(`/session/${session.id}/attendance`, '_blank')}
                   >
-                    <Download className="h-4 w-4" />
-                    Export
+                    <Users className="h-4 w-4" />
+                    View Monitoring
                   </Button>
                 </div>
               </div>
