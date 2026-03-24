@@ -32,27 +32,26 @@ export default function ContinuousAttendanceWidget({ classId, userId, sessionAct
     videoRef: videoRef as React.RefObject<HTMLVideoElement>,
   });
 
-  // Start camera stream into the hidden video element when session becomes active
+  // Start camera stream when session becomes active
   useEffect(() => {
+    let stream: MediaStream | null = null;
+
     if (!sessionActive) {
-      // Stop any existing stream
-      if (videoRef.current?.srcObject) {
-        (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
-        videoRef.current.srcObject = null;
-      }
       setCameraReady(false);
       return;
     }
 
     navigator.mediaDevices
-      .getUserMedia({ video: { width: 320, height: 240 }, audio: false })
-      .then(stream => {
+      .getUserMedia({ video: { width: 320, height: 240, facingMode: 'user' }, audio: false })
+      .then(s => {
+        stream = s;
+        // Feed the same stream to both the hidden processing video and the visible preview
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+          videoRef.current.srcObject = s;
           videoRef.current.play().catch(() => {});
         }
         if (previewRef.current) {
-          previewRef.current.srcObject = stream;
+          previewRef.current.srcObject = s;
           previewRef.current.play().catch(() => {});
         }
         setCameraReady(true);
@@ -63,9 +62,10 @@ export default function ContinuousAttendanceWidget({ classId, userId, sessionAct
       });
 
     return () => {
-      if (videoRef.current?.srcObject) {
-        (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
-      }
+      stream?.getTracks().forEach(t => t.stop());
+      if (videoRef.current) videoRef.current.srcObject = null;
+      if (previewRef.current) previewRef.current.srcObject = null;
+      setCameraReady(false);
     };
   }, [sessionActive]);
 

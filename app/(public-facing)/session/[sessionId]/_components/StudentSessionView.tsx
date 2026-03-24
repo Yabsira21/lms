@@ -65,8 +65,11 @@ export default function StudentSessionView({ session, user }: StudentSessionView
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
+  const instructorName = session.liveClass?.instructor?.name ?? 'Instructor';
+  const courseTitle = session.liveClass?.title ?? session.title;
+
   const [messages, setMessages] = useState([
-    { id: 1, sender: session.Course.user.name, time: '8:40 PM', text: "Welcome everyone. We'll start in 5 mins." },
+    { id: 1, sender: instructorName, time: '8:40 PM', text: "Welcome everyone. We'll start in 5 mins." },
     { id: 2, sender: 'Maria Lopez', time: '8:45 PM', text: 'Will this be recorded?' },
     { id: 3, sender: 'Maria Lopez', time: '8:45 PM', text: 'Lect Slides - Week 6.pdf' }
   ]);
@@ -79,8 +82,12 @@ export default function StudentSessionView({ session, user }: StudentSessionView
     const checkSessionStatus = async () => {
       try {
         const response = await fetch(`/api/session/${session.id}/status`);
-        if (!response.ok) return;
+        if (!response.ok) {
+          console.error('[Student Poll] GET failed:', response.status);
+          return;
+        }
         const data = await response.json();
+        console.log('[Student Poll] status:', data.status, '| actualStartTime:', data.actualStartTime);
 
         const map: Record<string, 'not-started' | 'ongoing' | 'paused' | 'ended'> = {
           Scheduled:  'not-started',
@@ -255,7 +262,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
                     <h2 className="text-base font-semibold">
-                      {session.Course.title}
+                      {courseTitle}
                     </h2>
                     {sessionStatus === 'ongoing' && (
                       <Badge className="bg-green-500 hover:bg-green-600 text-white px-2 py-0.5 text-xs animate-pulse">
@@ -282,7 +289,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                     Session: {session.title}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Instructor: {session.Course.user.name} • {new Date(session.startTime).toLocaleDateString()} • {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    Instructor: {instructorName} • {new Date(session.startTime).toLocaleDateString()} • {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1">

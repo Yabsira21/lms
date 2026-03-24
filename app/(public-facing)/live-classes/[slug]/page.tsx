@@ -40,6 +40,12 @@ export default async function LiveClassSlugPage({
   const thumbnailUrl = useContructUrl(liveClass.thumbnailKey || "");
   const isEnrolled = await checkIfLiveClassEnrolled(liveClass.id);
 
+  // Check if the current user is the instructor
+  const { headers } = await import("next/headers");
+  const { auth } = await import("@/lib/auth");
+  const authSession = await auth.api.getSession({ headers: await headers() });
+  const isInstructor = authSession?.user?.id === liveClass.instructor.id;
+
   // Calculate total sessions and weeks info
   const totalSessions = liveClass._count.classes;
   const sessionsPerWeek = liveClass.daysOfWeek.length;
@@ -225,7 +231,14 @@ export default async function LiveClassSlugPage({
                 </ul>
               </div>
 
-              {isEnrolled ? (
+              {isInstructor ? (
+                <Link
+                  className={buttonVariants({ className: "w-full" })}
+                  href={`/dashboard/liveclass/${liveClass.slug}`}
+                >
+                  Go to Classroom
+                </Link>
+              ) : isEnrolled ? (
                 <Link
                   className={buttonVariants({ className: "w-full" })}
                   href={`/dashboard/liveclass/${liveClass.slug}`}

@@ -9,47 +9,33 @@ interface PageProps {
 
 export default async function AttendanceMonitoringPage({ params }: PageProps) {
   const { sessionId } = await params;
-  
+
   const session = await auth.api.getSession({
     headers: await import('next/headers').then(h => h.headers())
   });
 
-  if (!session) {
-    redirect('/login');
-  }
+  if (!session) redirect('/login');
 
-  // Get class/session details with attendance records
   const classSession = await prisma.class.findUnique({
     where: { id: sessionId },
     include: {
-      Course: {
+      liveClass: {
         include: {
-          user: true,
-          enrollment: {
-            include: {
-              User: true
-            }
+          instructor: true,
+          enrollments: {
+            include: { user: true },
+            where: { status: 'Active' }
           }
         }
       },
-      Attendance: {
-        include: {
-          user: true
-        }
-      }
+      Attendance: { include: { user: true } }
     }
   });
 
-  if (!classSession) {
-    redirect('/dashboard');
-  }
+  if (!classSession) redirect('/dashboard');
 
-  // Check if user is instructor
-  const isInstructor = classSession.Course.userId === session.user.id;
-  
-  if (!isInstructor) {
-    redirect(`/session/${sessionId}`);
-  }
+  const isInstructor = classSession.liveClass?.instructorId === session.user.id;
+  if (!isInstructor) redirect(`/session/${sessionId}`);
 
   return <AttendanceMonitoring session={classSession} />;
 }

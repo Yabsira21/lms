@@ -237,15 +237,10 @@ model Attendance {
   id           String   @id
   userId       String
   classId      String
-
-  joinedAt     DateTime @default(now())   // 🔥 better than recognizedAt
-  leftAt       DateTime?
-
+  recognizedAt DateTime @default(now())
   confidence   Float?
   verified     Boolean  @default(false)
-
   createdAt    DateTime @default(now())
-
   Class        Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -328,38 +323,38 @@ enum AttendanceIntervalStatus {
 }
 
 model Class {
- id String @id @default(uuid())
+  id          String      @id @default(uuid())
   title       String
   description String?
 
-  // NEW: link to LiveClass (parent program)
+  // Link to LiveClass (parent program) — optional
   liveClassId String?
-  liveClass   LiveClass?   @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
+  liveClass   LiveClass?  @relation(fields: [liveClassId], references: [id], onDelete: Cascade)
 
-  courseId    String?      // keep if needed dk
-  Course      Course?      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Link to Course (self-paced) — optional
+  courseId    String?
+  Course      Course?     @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  startTime   DateTime
-  endTime     DateTime?
+  startTime       DateTime          // scheduled start
+  actualStartTime DateTime?         // set when instructor clicks "Start Session"
+  endTime         DateTime?
 
-  // 🔥 LiveKit integration
-  meetingId   String?      @unique
-  isLive      Boolean      @default(false)
+  // LiveKit integration
+  meetingId   String?     @unique
+  isLive      Boolean     @default(false)
 
-  status      ClassStatus  @default(Scheduled)
+  status      ClassStatus @default(Scheduled)
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  Attendance  Attendance[]
-
-  // ➕ NEW FEATURES
-  messages    Message[]
-  resources   ClassResource[]
+  Attendance          Attendance[]
+  attendanceIntervals AttendanceInterval[]
+  messages            Message[]
+  resources           ClassResource[]
 
   @@index([courseId])
   @@index([liveClassId])
-  attendanceIntervals AttendanceInterval[]
 }
 
 model Message {

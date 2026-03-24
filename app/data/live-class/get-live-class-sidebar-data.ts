@@ -49,22 +49,27 @@ export async function getLiveClassSidebarData(slug: string) {
     return notFound();
   }
 
-  const enrollment = await prisma.liveEnrollment.findUnique({
-    where: {
-      userId_liveClassId: {
-        userId: session.id,
-        liveClassId: liveClass.id,
-      },
-    },
-  });
+  // Allow the instructor through without an enrollment check
+  const isInstructor = session.id === liveClass.instructor.id;
 
-  if (!enrollment || enrollment.status !== "Active") {
-    return notFound();
+  if (!isInstructor) {
+    const enrollment = await prisma.liveEnrollment.findUnique({
+      where: {
+        userId_liveClassId: {
+          userId: session.id,
+          liveClassId: liveClass.id,
+        },
+      },
+    });
+
+    if (!enrollment || enrollment.status !== "Active") {
+      return notFound();
+    }
   }
 
   return {
     liveClass,
-    enrollment,
+    isInstructor,
   };
 }
 

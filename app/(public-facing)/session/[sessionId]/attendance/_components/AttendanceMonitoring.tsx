@@ -249,7 +249,7 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
   const fetchAllIntervals = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const studentIds: string[] = session.Course.enrollment.map((e: any) => e.User.id);
+      const studentIds: string[] = session.liveClass.enrollments.map((e: any) => e.user.id);
       const results = await Promise.all(
         studentIds.map(async (uid) => {
           try {
@@ -270,7 +270,7 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
     } finally {
       setIsRefreshing(false);
     }
-  }, [session.id, session.Course.enrollment]);
+  }, [session.id, session.liveClass.enrollments]);
 
   useEffect(() => {
     fetchAllIntervals();
@@ -280,9 +280,9 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
 
   // Build student rows
   const allStudents: StudentRow[] = useMemo(() => {
-    return session.Course.enrollment.map((enrollment: any) => {
-      const attendance = session.Attendance.find((att: any) => att.userId === enrollment.User.id);
-      const iData = intervalData[enrollment.User.id];
+    return session.liveClass.enrollments.map((enrollment: any) => {
+      const attendance = session.Attendance.find((att: any) => att.userId === enrollment.user.id);
+      const iData = intervalData[enrollment.user.id];
 
       const verifiedPct   = iData?.verifiedPct   ?? (attendance?.verified ? 100 : 0);
       const totalIntervals = iData?.totalIntervals ?? 0;
@@ -291,10 +291,10 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
       const isPresent = verifiedPct >= 75;
 
       return {
-        id: enrollment.User.id,
-        name: enrollment.User.name,
-        email: enrollment.User.email,
-        image: enrollment.User.image,
+        id: enrollment.user.id,
+        name: enrollment.user.name,
+        email: enrollment.user.email,
+        image: enrollment.user.image,
         attendanceStatus: isPresent ? 'Present' : attendance ? 'Late' : 'Absent',
         verified: isPresent,
         confidence: attendance?.confidence ?? 0,
@@ -382,7 +382,7 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <FileText className="h-5 w-5 text-gray-600" />
-                  <span className="font-semibold">{session.Course.title}</span>
+                  <span className="font-semibold">{session.liveClass.title}</span>
                   <span className="text-gray-400">·</span>
                   <span className="text-sm text-gray-600">{session.title}</span>
                 </div>

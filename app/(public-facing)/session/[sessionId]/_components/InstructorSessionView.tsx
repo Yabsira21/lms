@@ -150,11 +150,15 @@ export default function InstructorSessionView({ session, user }: InstructorSessi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Ongoing', actualStartTime })
       });
+      const data = await response.json();
       if (!response.ok) {
-        toast.error('Failed to update database, but session is running locally');
+        console.error('[Start Session] PATCH failed:', data);
+        toast.error(`DB update failed: ${data.detail ?? data.error ?? 'Unknown error'}`);
+      } else {
+        console.log('[Start Session] DB updated:', data);
       }
     } catch (error) {
-      console.error('Error starting session:', error);
+      console.error('[Start Session] Network error:', error);
     }
   };
 
@@ -352,7 +356,9 @@ function InstructorSessionContent({
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-xl font-bold">{session.Course.title}</h1>
+                <h1 className="text-xl font-bold">
+                  {session.liveClass?.title ?? session.title}
+                </h1>
                 {sessionStatus === 'ongoing' && (
                   <Badge className="bg-green-500 hover:bg-green-600 text-white animate-pulse">
                     Live

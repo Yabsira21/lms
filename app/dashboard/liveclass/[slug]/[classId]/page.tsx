@@ -12,12 +12,10 @@ interface iAppProps {
 
 export default async function LiveClassSessionPage({ params }: iAppProps) {
   const { slug, classId } = await params;
-  const { session, liveClass } = await getLiveClassSessionData(slug, classId);
+  const { session, liveClass, isInstructor } = await getLiveClassSessionData(slug, classId);
 
-  const now = new Date();
   const sessionTime = new Date(session.startTime);
-  const canJoin = sessionTime.getTime() - now.getTime() < 15 * 60 * 1000; // 15 minutes before start
-
+  const canJoin = true; // allow join anytime (15-min window can be re-enabled)
   return (
     <div className="h-full flex flex-col p-6">
       <div className="mb-6">
@@ -75,16 +73,9 @@ export default async function LiveClassSessionPage({ params }: iAppProps) {
               {session.status === "Ongoing" ||
               (canJoin && session.status === "Scheduled") ? (
                 <Button className="w-full" size="lg" asChild>
-                  <Link
-                    href={
-                      session.meetingId
-                        ? `https://meet.livekit.io/${session.meetingId}`
-                        : "#"
-                    }
-                    target="_blank"
-                  >
+                  <Link href={`/session/${session.id}`}>
                     <VideoIcon className="size-4 mr-2" />
-                    Join Live Session
+                    {isInstructor ? 'Start Live Session' : 'Join Live Session'}
                   </Link>
                 </Button>
               ) : session.status === "Completed" ? (

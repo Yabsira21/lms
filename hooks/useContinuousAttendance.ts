@@ -60,14 +60,15 @@ export function useContinuousAttendance({
   const loadModels = useCallback(async () => {
     if (typeof window === 'undefined') return;
     try {
-    const faceapi = await import('face-api.js');
+      const faceapi = await import('face-api.js');
       const MODEL_URL = '/models';
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-        faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),   // full model — present in /public/models
         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
       ]);
       faceApiRef.current = faceapi;
+      console.log('[Attendance] Models loaded successfully');
     } catch (err) {
       console.error('[Attendance] Failed to load face-api models:', err);
     }
@@ -99,7 +100,7 @@ export function useContinuousAttendance({
       // Detect ALL faces with landmarks + descriptors
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.4 }))
-        .withFaceLandmarks(true)
+        .withFaceLandmarks()          // full 68-point model
         .withFaceDescriptors();
 
       if (!detections || detections.length === 0) {
@@ -207,26 +208,35 @@ export function useContinuousAttendance({
     if (!enabled) {
       if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
       if (strikeTimerRef.current)   clearTimeout(strikeTimerRef.current);
-      setState(prev => ({ ...prev, isActive: false }));
+      setState(prev => ({ ...prev, isActive: false, strikeCount: 0 }));
       return;
     }
 
-    // Initialise
+    let cancelled = false;
+
     (async () => {
       await loadModels();
       await loadStoredEmbedding();
+      if (cancelled) return;
+
       setState(prev => ({ ...prev, isActive: true }));
 
       // First check immediately, then every minute
       await runIntervalTick();
+      if (cancelled) return;
+
       intervalTimerRef.current = setInterval(runIntervalTick, INTERVAL_MS);
     })();
 
     return () => {
+      cancelled = true;
       if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
       if (strikeTimerRef.current)   clearTimeout(strikeTimerRef.current);
+      intervalTimerRef.current = null;
+      strikeTimerRef.current = null;
     };
-  }, [enabled, loadModels, loadStoredEmbedding, runIntervalTick]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]); // Only re-run when enabled changes — not on every callback recreation
 
   return state;
 }
