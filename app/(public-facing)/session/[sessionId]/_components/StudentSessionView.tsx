@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,10 +15,15 @@ import {
   Send,
   Maximize,
   Minimize,
-  Clock
+  Clock,
+  Link2,
+  ExternalLink,
+  BarChart3,
+  FileText,
+  RefreshCw,
+  Pen
 } from 'lucide-react';
 import { toast } from 'sonner';
-import FaceRecognition from '@/components/face-recognition/FaceRecognition';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 
@@ -36,6 +41,214 @@ const VideoDisplay = dynamic(
   () => import('@/components/livekit/VideoDisplay'),
   { ssr: false }
 );
+
+const Whiteboard = dynamic(
+  () => import('@/components/session-tools/Whiteboard'),
+  { ssr: false }
+);
+
+// ─── Student Resources Tab ────────────────────────────────────────────────────
+function StudentResourcesTab({ sessionId, sessionActive, instructorName }: {
+  sessionId: string;
+  sessionActive: boolean;
+  instructorName: string;
+}) {
+  const [resources, setResources] = useState<{ id: string; title: string; fileUrl: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchResources = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/session/${sessionId}/materials`);
+      if (res.ok) {
+        const data = await res.json();
+        setResources(data.resources ?? []);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId]);
+
+  useEffect(() => {
+    fetchResources();
+    if (!sessionActive) return;
+    const interval = setInterval(fetchResources, 15_000); // poll every 15s
+    return () => clearInterval(interval);
+  }, [fetchResources, sessionActive]);
+
+  if (loading && resources.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
+        <RefreshCw className="h-4 w-4 animate-spin" />
+        <span className="text-sm">Loading materials…</span>
+      </div>
+    );
+  }
+
+  if (resources.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <FileText className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+        <p className="text-xs text-gray-500">No materials shared yet.</p>
+        <p className="text-xs text-gray-400">The instructor will share resources here.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-medium text-gray-700">Shared Materials ({resources.length})</p>
+        <button onClick={fetchResources} className="text-gray-400 hover:text-gray-600">
+          <RefreshCw className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {resources.map(r => (
+        <a
+          key={r.id}
+          href={r.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors group"
+        >
+          <div className="h-9 w-9 rounded bg-orange-100 flex items-center justify-center flex-shrink-0">
+            <Link2 className="h-4 w-4 text-orange-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 group-hover:text-orange-600 truncate">
+              {r.title}
+            </p>
+            <p className="text-xs text-gray-500 truncate">Shared by {instructorName}</p>
+          </div>
+          <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-orange-500 flex-shrink-0" />
+        </a>
+      ))}
+    </div>
+  );
+}
+
+// ─── Student Poll Widget ──────────────────────────────────────────────────────
+function StudentPollWidget({ sessionId, userId, sessionActive }: {
+  sessionId: string;
+  userId: string;
+  sessionActive: boolean;
+}) {
+  const [poll, setPoll] = useState<{
+    id: string;
+    question: string;
+    options: string[];
+    counts: Record<string, number>;
+    totalVotes: number;
+    myVote: string | null;
+    active: boolean;
+  } | null>(null);
+  const [voting, setVoting] = useState(false);
+
+  const fetchPoll = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/session/${sessionId}/poll`);
+      if (res.ok) {
+        const data = await res.json();
+        setPoll(data.poll);
+      }
+    } catch {}
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionActive) return;
+    fetchPoll();
+    const interval = setInterval(fetchPoll, 5_000); // poll every 5s
+    return () => clearInterval(interval);
+  }, [fetchPoll, sessionActive]);
+
+  const handleVote = async (option: string) => {
+    if (!poll || poll.myVote || voting) return;
+    setVoting(true);
+    try {
+      const res = await fetch(`/api/session/${sessionId}/poll`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vote: option }),
+      });
+      if (res.ok) {
+        toast.success('Vote submitted!');
+        fetchPoll();
+      }
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  if (!poll) return null;
+
+  const maxVotes = Math.max(...Object.values(poll.counts), 1);
+
+  return (
+    <Card className="shadow-sm border-orange-200 bg-orange-50/50 mt-4">
+      <div className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-orange-500" />
+          <span className="text-sm font-semibold text-orange-700">Live Poll</span>
+          <Badge className="bg-orange-500 text-white text-xs animate-pulse ml-auto">Active</Badge>
+        </div>
+
+        <p className="text-sm font-medium">{poll.question}</p>
+
+        <div className="space-y-2">
+          {poll.options.map(option => {
+            const count = poll.counts[option] ?? 0;
+            const pct = poll.totalVotes > 0 ? Math.round((count / poll.totalVotes) * 100) : 0;
+            const isMyVote = poll.myVote === option;
+            const isLeading = count === maxVotes && count > 0;
+
+            return (
+              <button
+                key={option}
+                onClick={() => handleVote(option)}
+                disabled={!!poll.myVote || voting}
+                className={`w-full text-left rounded-lg border transition-all ${
+                  isMyVote
+                    ? 'border-orange-500 bg-orange-100'
+                    : poll.myVote
+                    ? 'border-gray-200 bg-white cursor-default'
+                    : 'border-gray-200 bg-white hover:border-orange-400 hover:bg-orange-50 cursor-pointer'
+                }`}
+              >
+                <div className="p-2.5 space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className={isMyVote ? 'font-semibold text-orange-700' : ''}>
+                      {option} {isMyVote && '✓'}
+                    </span>
+                    {poll.myVote && (
+                      <span className={`text-xs ${isLeading ? 'font-semibold text-orange-600' : 'text-gray-500'}`}>
+                        {count} ({pct}%)
+                      </span>
+                    )}
+                  </div>
+                  {poll.myVote && (
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${isLeading ? 'bg-orange-500' : 'bg-blue-400'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {!poll.myVote && (
+          <p className="text-xs text-gray-500 text-center">Tap an option to vote</p>
+        )}
+        {poll.myVote && (
+          <p className="text-xs text-gray-500 text-center">{poll.totalVotes} total vote{poll.totalVotes !== 1 ? 's' : ''}</p>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 interface StudentSessionViewProps {
   session: any;
@@ -62,6 +275,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
     return 0;
   });
   const [isLeaving, setIsLeaving] = useState(false);
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -168,11 +382,21 @@ export default function StudentSessionView({ session, user }: StudentSessionView
     }
   };
 
-  // Handle raise hand
-  const handleRaiseHand = () => {
-    setHandRaised(!handRaised);
-    if (!handRaised) {
-      toast.success('Hand raised! The instructor will be notified.');
+  // Handle raise hand — notifies instructor via API
+  const handleRaiseHand = async () => {
+    const newRaised = !handRaised;
+    setHandRaised(newRaised);
+    try {
+      await fetch(`/api/session/${session.id}/raise-hand`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raised: newRaised, name: user.name }),
+      });
+    } catch (err) {
+      console.error('[RaiseHand]', err);
+    }
+    if (newRaised) {
+      toast.success('Hand raised — the instructor has been notified.');
     } else {
       toast.info('Hand lowered');
     }
@@ -316,6 +540,27 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                 <div className={`bg-black relative ${isFullscreen ? 'h-screen' : 'aspect-video'}`}>
                   {/* LiveKit Video Display */}
                   <VideoDisplay />
+
+                  {/* Whiteboard overlay — appears when instructor opens whiteboard */}
+                  {showWhiteboard && (
+                    <Whiteboard
+                      sessionId={session.id}
+                      isInstructor={false}
+                      onClose={() => setShowWhiteboard(false)}
+                    />
+                  )}
+
+                  {/* Whiteboard notification button */}
+                  {!showWhiteboard && sessionStatus === 'ongoing' && (
+                    <button
+                      onClick={() => setShowWhiteboard(true)}
+                      className="absolute top-4 left-4 bg-orange-500/90 hover:bg-orange-600 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 z-10 transition-all"
+                      title="View Whiteboard"
+                    >
+                      <Pen className="h-3.5 w-3.5" />
+                      Whiteboard
+                    </button>
+                  )}
                   
                   {/* Fullscreen Toggle Button - Bottom Right */}
                   <button
@@ -482,6 +727,13 @@ export default function StudentSessionView({ session, user }: StudentSessionView
               sessionActive={sessionStatus === 'ongoing'}
             />
 
+            {/* Live Poll — appears automatically when instructor launches one */}
+            <StudentPollWidget
+              sessionId={session.id}
+              userId={user.id}
+              sessionActive={sessionStatus === 'ongoing'}
+            />
+
             {/* Tabs */}
             <Card className="shadow-sm">
               <div className="border-b">
@@ -637,64 +889,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                 )}
                 
                 {activeTab === 'resources' && (
-                  <div className="space-y-3">
-                    <div className="text-sm font-medium text-gray-700 mb-3">
-                      Shared Materials
-                    </div>
-                    <div className="space-y-2">
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors cursor-pointer group">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded bg-red-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 group-hover:text-orange-600 transition-colors">
-                              Lecture Slides - Week 6.pdf
-                            </div>
-                            <div className="text-xs text-gray-500 mt-0.5">
-                              Shared by Dr. Smith • 2.4 MB
-                            </div>
-                          </div>
-                          <Button size="sm" variant="ghost" className="flex-shrink-0">
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors cursor-pointer group">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 group-hover:text-orange-600 transition-colors">
-                              Assignment - Neural Networks.docx
-                            </div>
-                            <div className="text-xs text-gray-500 mt-0.5">
-                              Shared by Dr. Smith • 156 KB
-                            </div>
-                          </div>
-                          <Button size="sm" variant="ghost" className="flex-shrink-0">
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="text-center py-4">
-                        <p className="text-xs text-gray-500">
-                          Resources shared during the session will appear here
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <StudentResourcesTab sessionId={session.id} sessionActive={sessionStatus === 'ongoing'} instructorName={instructorName} />
                 )}
               </div>
             </Card>

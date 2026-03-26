@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Card } from '@/components/ui/card';
+import { useState, useEffect, useRef } from 'react';import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -31,13 +30,30 @@ import {
   WifiOff,
   Clock,
   Maximize,
-  Minimize
+  Minimize,
+  Pen,
+  Hand
 } from 'lucide-react';
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRealTimeAttendance } from '@/hooks/useRealTimeAttendance';
 import { useRouter } from 'next/navigation';
+
+const ShareMaterialsDialog = dynamic(
+  () => import('@/components/session-tools/ShareMaterialsDialog'),
+  { ssr: false }
+);
+
+const LaunchPollDialog = dynamic(
+  () => import('@/components/session-tools/LaunchPollDialog'),
+  { ssr: false }
+);
+
+const Whiteboard = dynamic(
+  () => import('@/components/session-tools/Whiteboard'),
+  { ssr: false }
+);
 
 const LiveSessionRoom = dynamic(
   () => import('@/components/livekit/LiveSessionRoom'),
@@ -48,6 +64,107 @@ const VideoDisplay = dynamic(
   () => import('@/components/livekit/VideoDisplay'),
   { ssr: false }
 );
+
+// ─── Raised Hands Panel ───────────────────────────────────────────────────────
+function RaisedHandsPanel({ sessionId }: { sessionId: string }) {
+  const [hands, setHands] = useState<{ userId: string; name: string; raisedAt: string }[]>([]);
+  const prevCountRef = useRef(0);
+
+  useEffect(() => {
+    const fetchHands = async () => {
+      try {
+        const res = await fetch(`/api/session/${sessionId}/raise-hand`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const sorted = [...data.hands].sort(
+          (a: any, b: any) => new Date(a.raisedAt).getTime() - new Date(b.raisedAt).getTime()
+        );
+        // Toast when a new hand is raised
+        if (sorted.length > prevCountRef.current) {
+          const newest = sorted[sorted.length - 1];
+          toast(`✋ ${newest.name} raised their hand`, { duration: 4000 });
+        }
+        prevCountRef.current = sorted.length;
+        setHands(sorted);
+      } catch {}
+    };
+
+    fetchHands();
+    const interval = setInterval(fetchHands, 3000);
+    return () => clearInterval(interval);
+  }, [sessionId]);
+
+  const dismiss = async (userId: string) => {
+    await fetch(`/api/session/${sessionId}/raise-hand?userId=${userId}`, { method: 'DELETE' });
+    setHands(prev => prev.filter(h => h.userId !== userId));
+  };
+
+  const dismissAll = async () => {
+    await fetch(`/api/session/${sessionId}/raise-hand`, { method: 'DELETE' });
+    setHands([]);
+  };
+
+  return (
+    <Card className="shadow-sm">
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Hand className="h-4 w-4 text-orange-500" />
+            <h3 className="font-semibold">Raised Hands</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            {hands.length > 0 && (
+              <Badge className="bg-orange-500 text-white animate-pulse">
+                {hands.length}
+              </Badge>
+            )}
+            {hands.length > 1 && (
+              <button
+                onClick={dismissAll}
+                className="text-xs text-gray-400 hover:text-gray-600 underline"
+              >
+                Dismiss all
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="p-3">
+        {hands.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-3">
+            No hands raised
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {hands.map((h, i) => (
+              <div
+                key={h.userId}
+                className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded-lg"
+              >
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center font-semibold">
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{h.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(h.raisedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => dismiss(h.userId)}
+                  className="flex-shrink-0 p-1 rounded hover:bg-orange-100 text-orange-400 hover:text-orange-600 transition-colors"
+                  title="Dismiss"
+                >
+                  <XCircle className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
 
 interface InstructorSessionViewProps {
   session: any;
@@ -64,6 +181,9 @@ export default function InstructorSessionView({ session, user }: InstructorSessi
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [showShareMaterials, setShowShareMaterials] = useState(false);
+  const [showPoll, setShowPoll] = useState(false);
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [notifications] = useState([
     { id: 1, type: 'join', text: 'Alex Chen joined the session', time: '10:00 AM', icon: '👤' },
     { id: 2, type: 'join', text: 'Maria Garcia joined the session', time: '10:01 AM', icon: '👤' },
@@ -276,6 +396,12 @@ export default function InstructorSessionView({ session, user }: InstructorSessi
           isFullscreen={isFullscreen}
           toggleFullscreen={toggleFullscreen}
           videoContainerRef={videoContainerRef}
+          showShareMaterials={showShareMaterials}
+          setShowShareMaterials={setShowShareMaterials}
+          showPoll={showPoll}
+          setShowPoll={setShowPoll}
+          showWhiteboard={showWhiteboard}
+          setShowWhiteboard={setShowWhiteboard}
           liveKitProps={liveKitProps}
         />
       )}
@@ -310,9 +436,33 @@ function InstructorSessionContent({
   isFullscreen,
   toggleFullscreen,
   videoContainerRef,
+  showShareMaterials,
+  setShowShareMaterials,
+  showPoll,
+  setShowPoll,
+  showWhiteboard,
+  setShowWhiteboard,
   liveKitProps
 }: any) {
   const { isMuted, isCameraOff, isScreenSharing, toggleMute, toggleCamera, toggleScreenShare, isConnected } = liveKitProps;
+
+  // Mute all participants via LiveKit room
+  const handleMuteAll = async () => {
+    try {
+      const res = await fetch(`/api/livekit/mute-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName: `session-${session.id}` }),
+      });
+      if (res.ok) {
+        toast.success('All participants muted');
+      } else {
+        toast.error('Failed to mute all');
+      }
+    } catch {
+      toast.error('Failed to mute all');
+    }
+  };
 
   // Real-time attendance tracking (without LiveKit participants for now)
   const {
@@ -484,42 +634,8 @@ function InstructorSessionContent({
               </div>
             </Card>
 
-            {/* Notifications */}
-            <Card className="shadow-sm">
-              <div className="p-4 border-b">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Bell className="h-4 w-4" />
-                    <h3 className="font-semibold">Notifications</h3>
-                  </div>
-                  <Badge variant="secondary" className="bg-orange-500 text-white">
-                    {notifications.length}
-                  </Badge>
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="space-y-2">
-                  {notifications.map((notif: any) => (
-                    <div 
-                      key={notif.id} 
-                      className={`p-2 rounded text-xs ${
-                        notif.type === 'warning' 
-                          ? 'bg-yellow-50 border border-yellow-200' 
-                          : 'bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2">
-                        <span className="text-base">{notif.icon}</span>
-                        <div className="flex-1">
-                          <div className="text-gray-700">{notif.text}</div>
-                          <div className="text-gray-500 mt-1">{notif.time}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
+            {/* Raised Hands — live polling */}
+            <RaisedHandsPanel sessionId={session.id} />
           </div>
 
           {/* Main Content - Video/Screen Share */}
@@ -661,30 +777,34 @@ function InstructorSessionContent({
                       <div className="absolute top-4 left-4 z-30">
                         <div className="bg-gray-900/95 backdrop-blur-sm rounded-lg p-3 shadow-2xl">
                           <div className="flex flex-col gap-2">
-                            <button 
-                              className="p-2 hover:bg-gray-700 rounded transition-colors text-white"
+                            <button
+                              className={`p-2 rounded transition-colors text-white ${showWhiteboard ? 'bg-orange-500' : 'hover:bg-gray-700'}`}
                               disabled={sessionStatus !== 'ongoing'}
-                              title="Presentation"
+                              onClick={() => setShowWhiteboard((v: boolean) => !v)}
+                              title="Whiteboard"
                             >
-                              <FileText className="h-5 w-5" />
+                              <Pen className="h-5 w-5" />
                             </button>
-                            <button 
+                            <button
                               className="p-2 hover:bg-gray-700 rounded transition-colors text-white"
                               disabled={sessionStatus !== 'ongoing'}
+                              onClick={() => setShowShareMaterials(true)}
                               title="Share Materials"
                             >
                               <FileText className="h-5 w-5" />
                             </button>
-                            <button 
+                            <button
                               className="p-2 hover:bg-gray-700 rounded transition-colors text-white"
                               disabled={sessionStatus !== 'ongoing'}
+                              onClick={() => setShowPoll(true)}
                               title="Launch Poll"
                             >
                               <BarChart3 className="h-5 w-5" />
                             </button>
-                            <button 
+                            <button
                               className="p-2 hover:bg-gray-700 rounded transition-colors text-white"
                               disabled={sessionStatus !== 'ongoing'}
+                              onClick={handleMuteAll}
                               title="Mute All"
                             >
                               <Volume2 className="h-5 w-5" />
@@ -693,6 +813,14 @@ function InstructorSessionContent({
                         </div>
                       </div>
                     </>
+                  )}
+                  {/* Whiteboard overlay — shown over video when active */}
+                  {showWhiteboard && (
+                    <Whiteboard
+                      sessionId={session.id}
+                      isInstructor={true}
+                      onClose={() => setShowWhiteboard(false)}
+                    />
                   )}
                 </div>
               </Card>
@@ -845,19 +973,21 @@ function InstructorSessionContent({
               <div className="p-4">
                 <div className="grid grid-cols-2 gap-3">
                   <Button 
-                    variant="outline" 
+                    variant={showWhiteboard ? 'default' : 'outline'}
                     size="sm" 
-                    className="justify-start gap-2"
+                    className={`justify-start gap-2 ${showWhiteboard ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
                     disabled={sessionStatus !== 'ongoing'}
+                    onClick={() => setShowWhiteboard((v: boolean) => !v)}
                   >
-                    <FileText className="h-4 w-4" />
-                    Presentation
+                    <Pen className="h-4 w-4" />
+                    Whiteboard
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
                     className="justify-start gap-2"
                     disabled={sessionStatus !== 'ongoing'}
+                    onClick={() => setShowShareMaterials(true)}
                   >
                     <FileText className="h-4 w-4" />
                     Share Materials
@@ -867,6 +997,7 @@ function InstructorSessionContent({
                     size="sm" 
                     className="justify-start gap-2"
                     disabled={sessionStatus !== 'ongoing'}
+                    onClick={() => setShowPoll(true)}
                   >
                     <BarChart3 className="h-4 w-4" />
                     Launch Poll
@@ -876,14 +1007,27 @@ function InstructorSessionContent({
                     size="sm" 
                     className="justify-start gap-2"
                     disabled={sessionStatus !== 'ongoing'}
+                    onClick={handleMuteAll}
                   >
                     <Volume2 className="h-4 w-4" />
-                    Mute All
+                    Mute All Students
                   </Button>
                 </div>
               </div>
             </Card>
             )}
+
+            {/* Dialogs */}
+            <ShareMaterialsDialog
+              open={showShareMaterials}
+              onClose={() => setShowShareMaterials(false)}
+              sessionId={session.id}
+            />
+            <LaunchPollDialog
+              open={showPoll}
+              onClose={() => setShowPoll(false)}
+              sessionId={session.id}
+            />
           </div>
 
           {/* Right Sidebar - Attendance */}
