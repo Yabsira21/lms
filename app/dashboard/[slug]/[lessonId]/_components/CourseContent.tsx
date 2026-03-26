@@ -10,6 +10,7 @@ import { useTransition } from "react";
 import { markLessonComplete } from "../actions";
 import { toast } from "sonner";
 import { useConfetti } from "@/hooks/use-confetti";
+import { LessonChat } from "./LessonChat";
 
 interface iAppProps {
   data: LessonContentType;
@@ -54,7 +55,7 @@ export default function CourseContent({ data }: iAppProps) {
   function onSubmit() {
     startTransition(async () => {
       const { data: result, error } = await tryCatch(
-        markLessonComplete(data.id, data.chapter.course.slug)
+        markLessonComplete(data.id, data.chapter.course.slug),
       );
       if (error) {
         toast.error("Failed to create course");
@@ -100,6 +101,10 @@ export default function CourseContent({ data }: iAppProps) {
         {data.description && (
           <RenderDescription json={JSON.parse(data.description)} />
         )}
+      </div>
+
+      <div className="lg:col-span-1">
+        <LessonChat lessonId={data.id} />
       </div>
     </div>
   );
