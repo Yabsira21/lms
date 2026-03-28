@@ -35,7 +35,7 @@ interface ProfileContentProps {
 
 export default function ProfileContent({ user }: ProfileContentProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('+1 (555) 123-4567');
+  const [phoneNumber, setPhoneNumber] = useState('+251 935047486');
   const [bio, setBio] = useState('Computer Science student with a passion for AI and machine learning. Always eager to learn.');
   
   const [notifications, setNotifications] = useState({

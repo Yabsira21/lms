@@ -5,6 +5,7 @@ import {
   LiveKitRoom,
   useLocalParticipant,
   useRoomContext,
+  useParticipants,
   RoomAudioRenderer,
 } from '@livekit/components-react';
 import '@livekit/components-styles';

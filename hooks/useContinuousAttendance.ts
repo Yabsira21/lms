@@ -17,12 +17,15 @@ export interface AttendanceState {
   totalLogged: number;
   verifiedPct: number;
   isActive: boolean;
+  faceBox: { x: number; y: number; width: number; height: number } | null;
+  isFacePositioned: boolean | null;
 }
 
 const INTERVAL_MS = 60_000;   // 1 minute
 const RETRY_MS   = 5_000;     // 5 seconds between strikes
 const MAX_STRIKES = 3;
 const DISTANCE_THRESHOLD = 0.5;
+const POSITION_CHECK_MS = 1_000;
 
 /** Euclidean distance between two 128-d vectors */
 function euclidean(a: number[], b: number[]): number {
@@ -45,6 +48,8 @@ export function useContinuousAttendance({
     totalLogged: 0,
     verifiedPct: 0,
     isActive: false,
+    faceBox: null,
+    isFacePositioned: null,
   });
 
   // Refs so callbacks always see latest values without re-creating timers
@@ -53,8 +58,48 @@ export function useContinuousAttendance({
 
   const intervalTimerRef = useRef<NodeJS.Timeout | null>(null);
   const strikeTimerRef   = useRef<NodeJS.Timeout | null>(null);
+  const positionTimerRef = useRef<NodeJS.Timeout | null>(null);
   const faceApiRef       = useRef<any>(null);
   const storedEmbeddingRef = useRef<number[] | null>(null);
+
+  const getPrimaryFaceBox = useCallback(async () => {
+    const faceapi = faceApiRef.current;
+    const video = videoRef.current;
+    if (!faceapi || !video || video.videoWidth === 0 || video.videoHeight === 0) {
+      return null;
+    }
+
+    const detections = await faceapi.detectAllFaces(
+      video,
+      new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.4 }),
+    );
+
+    if (!detections || detections.length === 0) return null;
+
+    const primary = detections.reduce((best: any, d: any) => {
+      const area = d.box.width * d.box.height;
+      const bestArea = best.box.width * best.box.height;
+      return area > bestArea ? d : best;
+    });
+
+    const box = primary.box;
+    const width = box.width / video.videoWidth;
+    const height = box.height / video.videoHeight;
+    const x = box.x / video.videoWidth;
+    const y = box.y / video.videoHeight;
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+    const areaRatio = width * height;
+
+    const isCenteredHorizontally = centerX >= 0.35 && centerX <= 0.65;
+    const isCenteredVertically = centerY >= 0.25 && centerY <= 0.75;
+    const isReasonableSize = areaRatio >= 0.08 && areaRatio <= 0.5;
+
+    return {
+      box: { x, y, width, height },
+      isPositioned: isCenteredHorizontally && isCenteredVertically && isReasonableSize,
+    };
+  }, [videoRef]);
 
   // ─── Load face-api.js models once ───────────────────────────────────────────
   const loadModels = useCallback(async () => {
@@ -97,6 +142,18 @@ export function useContinuousAttendance({
     if (!faceapi || !video || !stored) return { verified: false, confidence: 0 };
 
     try {
+      const primaryFaceData = await getPrimaryFaceBox();
+      if (!primaryFaceData) {
+        setState(prev => ({ ...prev, faceBox: null, isFacePositioned: null }));
+        return { verified: false, confidence: 0 };
+      }
+
+      setState(prev => ({
+        ...prev,
+        faceBox: primaryFaceData.box,
+        isFacePositioned: primaryFaceData.isPositioned,
+      }));
+
       // Detect ALL faces with landmarks + descriptors
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.4 }))
@@ -126,7 +183,20 @@ export function useContinuousAttendance({
       console.error('[Attendance] verifyFrame error:', err);
       return { verified: false, confidence: 0 };
     }
-  }, [videoRef]);
+  }, [videoRef, getPrimaryFaceBox]);
+
+  const runPositionCheck = useCallback(async () => {
+    try {
+      const faceData = await getPrimaryFaceBox();
+      setState(prev => ({
+        ...prev,
+        faceBox: faceData?.box ?? null,
+        isFacePositioned: faceData?.isPositioned ?? null,
+      }));
+    } catch {
+      setState(prev => ({ ...prev, faceBox: null, isFacePositioned: null }));
+    }
+  }, [getPrimaryFaceBox]);
 
   // ─── Log an interval result to the server ───────────────────────────────────
   const logInterval = useCallback(
@@ -208,7 +278,14 @@ export function useContinuousAttendance({
     if (!enabled) {
       if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
       if (strikeTimerRef.current)   clearTimeout(strikeTimerRef.current);
-      setState(prev => ({ ...prev, isActive: false, strikeCount: 0 }));
+      if (positionTimerRef.current) clearInterval(positionTimerRef.current);
+      setState(prev => ({
+        ...prev,
+        isActive: false,
+        strikeCount: 0,
+        faceBox: null,
+        isFacePositioned: null,
+      }));
       return;
     }
 
@@ -226,14 +303,18 @@ export function useContinuousAttendance({
       if (cancelled) return;
 
       intervalTimerRef.current = setInterval(runIntervalTick, INTERVAL_MS);
+      await runPositionCheck();
+      positionTimerRef.current = setInterval(runPositionCheck, POSITION_CHECK_MS);
     })();
 
     return () => {
       cancelled = true;
       if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
       if (strikeTimerRef.current)   clearTimeout(strikeTimerRef.current);
+      if (positionTimerRef.current) clearInterval(positionTimerRef.current);
       intervalTimerRef.current = null;
       strikeTimerRef.current = null;
+      positionTimerRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]); // Only re-run when enabled changes — not on every callback recreation

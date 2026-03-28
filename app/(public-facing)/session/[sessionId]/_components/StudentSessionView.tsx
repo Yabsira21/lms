@@ -26,6 +26,7 @@ import {
 import { toast } from 'sonner';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useParticipants } from '@livekit/components-react';
 
 const ContinuousAttendanceWidget = dynamic(
   () => import('@/components/attendance/ContinuousAttendanceWidget'),
@@ -47,7 +48,104 @@ const Whiteboard = dynamic(
   { ssr: false }
 );
 
-// ─── Student Resources Tab ────────────────────────────────────────────────────
+// ─── Student Participants Tab ─────────────────────────────────────────────────
+// Receives participants as a prop — data fetched inside LiveKit context by the caller
+function StudentParticipantsTab({ participants, instructorId }: {
+  participants: any[];
+  instructorId: string;
+}) {
+  const instructor = participants.find((p: any) => p.identity === instructorId);
+  const students = participants.filter((p: any) => p.identity !== instructorId);
+  const total = participants.length;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700">
+          {total} participant{total !== 1 ? 's' : ''}
+        </span>
+        <Badge variant="secondary" className="bg-green-100 text-green-700">
+          Online
+        </Badge>
+      </div>
+
+      <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+        {/* Instructor first */}
+        {instructor && (
+          <ParticipantRow
+            name={instructor.name || instructor.identity}
+            isInstructor={true}
+            isSpeaking={instructor.isSpeaking}
+            isMicEnabled={instructor.isMicrophoneEnabled}
+            isCameraEnabled={instructor.isCameraEnabled}
+          />
+        )}
+
+        {/* Students */}
+        {students.map((p: any) => (
+          <ParticipantRow
+            key={p.identity}
+            name={p.name || p.identity}
+            isInstructor={false}
+            isSpeaking={p.isSpeaking}
+            isMicEnabled={p.isMicrophoneEnabled}
+            isCameraEnabled={p.isCameraEnabled}
+          />
+        ))}
+
+        {total === 0 && (
+          <p className="text-xs text-gray-400 text-center py-4">
+            No participants yet
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ParticipantRow({ name, isInstructor, isSpeaking, isMicEnabled, isCameraEnabled }: {
+  name: string;
+  isInstructor: boolean;
+  isSpeaking: boolean;
+  isMicEnabled: boolean;
+  isCameraEnabled: boolean;
+}) {
+  const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+
+  return (
+    <div className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors ${isSpeaking ? 'bg-green-50 border border-green-200' : 'hover:bg-gray-50'}`}>
+      <div className="relative flex-shrink-0">
+        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold text-white ${isInstructor ? 'bg-blue-500' : 'bg-orange-500'}`}>
+          {initials}
+        </div>
+        {/* Online dot */}
+        <div className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white ${isSpeaking ? 'bg-green-500 animate-pulse' : 'bg-green-400'}`} />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
+          {isInstructor && (
+            <Badge variant="secondary" className="text-xs py-0 px-1.5 h-4">Host</Badge>
+          )}
+        </div>
+        <p className="text-xs text-gray-500">
+          {isSpeaking ? 'Speaking…' : isInstructor ? 'Presenting' : 'Attending'}
+        </p>
+      </div>
+
+      {/* Mic / Camera indicators */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {!isMicEnabled && (
+          <MicOff className="h-3.5 w-3.5 text-red-400" />
+        )}
+        {isCameraEnabled && (
+          <Video className="h-3.5 w-3.5 text-blue-400" />
+        )}
+      </div>
+    </div>
+  );
+}
 function StudentResourcesTab({ sessionId, sessionActive, instructorName }: {
   sessionId: string;
   sessionActive: boolean;
@@ -846,46 +944,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                 )}
                 
                 {activeTab === 'participants' && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-gray-700">10 participants</span>
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
-                        Online
-                      </Badge>
-                    </div>
-                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                      {[
-                        { name: 'Dr. Smith', role: 'Instructor', status: 'presenting' },
-                        { name: 'Maria Lopez', role: 'Student', status: 'online' },
-                        { name: 'Alex Chen', role: 'Student', status: 'online' },
-                        { name: 'Sarah Kim', role: 'Student', status: 'online' },
-                        { name: 'James Wilson', role: 'Student', status: 'online' },
-                        { name: 'Emily Brown', role: 'Student', status: 'online' },
-                      ].map((participant, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-2 rounded hover:bg-gray-50 transition-colors">
-                          <div className="relative">
-                            <div className="h-8 w-8 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-semibold">
-                              {participant.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${
-                              participant.status === 'presenting' ? 'bg-blue-500' : 'bg-green-500'
-                            }`} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate">
-                              {participant.name}
-                              {participant.role === 'Instructor' && (
-                                <Badge variant="secondary" className="ml-2 text-xs">Host</Badge>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {participant.status === 'presenting' ? 'Presenting' : 'Attending'}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <StudentParticipantsTab instructorId={session.liveClass?.instructorId ?? ''} />
                 )}
                 
                 {activeTab === 'resources' && (

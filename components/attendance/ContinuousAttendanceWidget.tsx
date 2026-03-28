@@ -25,6 +25,8 @@ export default function ContinuousAttendanceWidget({ classId, userId, sessionAct
     totalLogged,
     verifiedPct,
     isActive,
+    faceBox,
+    isFacePositioned,
   } = useContinuousAttendance({
     classId,
     userId,
@@ -109,6 +111,13 @@ export default function ContinuousAttendanceWidget({ classId, userId, sessionAct
     lastStatus === 'UNVERIFIED' ? 'Unverified' :
     'Initialising…';
 
+  const bracketColorClass =
+    isFacePositioned === null
+      ? 'text-red-500'
+      : isFacePositioned
+        ? 'text-green-500'
+        : 'text-red-500';
+
   return (
     <Card className="shadow-sm">
       <div className="p-4 space-y-3">
@@ -149,6 +158,24 @@ export default function ContinuousAttendanceWidget({ classId, userId, sessionAct
             </div>
           )}
 
+          {/* Face position bracket overlay */}
+          {cameraReady && faceBox && (
+            <div
+              className={`absolute pointer-events-none ${bracketColorClass}`}
+              style={{
+                left: `${(1 - (faceBox.x + faceBox.width)) * 100}%`,
+                top: `${faceBox.y * 100}%`,
+                width: `${faceBox.width * 100}%`,
+                height: `${faceBox.height * 100}%`,
+              }}
+            >
+              <div className="absolute top-0 left-0 w-5 h-5 border-t-[3px] border-l-[3px] border-current rounded-tl-sm" />
+              <div className="absolute top-0 right-0 w-5 h-5 border-t-[3px] border-r-[3px] border-current rounded-tr-sm" />
+              <div className="absolute bottom-0 left-0 w-5 h-5 border-b-[3px] border-l-[3px] border-current rounded-bl-sm" />
+              <div className="absolute bottom-0 right-0 w-5 h-5 border-b-[3px] border-r-[3px] border-current rounded-br-sm" />
+            </div>
+          )}
+
           {/* Live status pill */}
           {cameraReady && (
             <div className={`absolute bottom-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-full text-white text-xs font-medium ${statusColor}`}>
@@ -156,6 +183,27 @@ export default function ContinuousAttendanceWidget({ classId, userId, sessionAct
               {lastStatus === 'VERIFIED'  && <CheckCircle2 className="h-3 w-3" />}
               {lastStatus === 'UNVERIFIED'&& <AlertTriangle className="h-3 w-3" />}
               {statusLabel}
+            </div>
+          )}
+
+          {/* Face alignment hint */}
+          {cameraReady && (
+            <div className="absolute top-2 left-2 right-2 flex justify-center">
+              <div
+                className={`px-2 py-1 rounded text-xs font-medium ${
+                  isFacePositioned === null
+                    ? 'bg-red-500/80 text-white'
+                    : isFacePositioned
+                      ? 'bg-green-500/80 text-white'
+                      : 'bg-red-500/80 text-white'
+                }`}
+              >
+                {isFacePositioned === null
+                  ? 'Face not detected'
+                  : isFacePositioned
+                    ? 'Face position correct'
+                    : 'Adjust face into center'}
+              </div>
             </div>
           )}
         </div>
