@@ -253,13 +253,13 @@ export function EditLiveClassForm({ data }: iAppProps) {
                   <Input
                     type="number"
                     placeholder="Enter max students"
-                    min={1}
-                    max={50}
+                    // min={1}
+                    // max={50}
                     value={field.value as number | undefined}
                     onChange={(e) => {
                       let value = Number(e.target.value);
-                      if (value < 1) value = 1;
-                      if (value > 50) value = 50;
+                      // if (value < 1) value = 1;
+                      // if (value > 50) value = 50;
                       field.onChange(value);
                     }}
                     onBlur={field.onBlur}

@@ -303,75 +303,6 @@ export default function LiveClassCreationPage() {
                   )}
                 />
 
-                {/* <FormField
-                    control={form.control}
-                    name="daysOfWeek"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Class Days</FormLabel>
-
-                        <div className="relative">
-                      
-                          <div
-                            className="w-full border rounded-md px-3 py-2 cursor-pointer flex justify-between items-center"
-                            onClick={() =>
-                              document
-                                .getElementById("days-dropdown")
-                                ?.classList.toggle("hidden")
-                            }
-                          >
-                            <span className="text-sm">
-                              {field.value?.length > 0
-                                ? field.value.join(", ")
-                                : "Select days"}
-                            </span>
-                            <span>▾</span>
-                          </div>
-
-                        
-                          <div
-                            id="days-dropdown"
-                            className="absolute z-10 mt-1 w-full border bg-white rounded-md shadow-md hidden p-2 space-y-1"
-                          >
-                            {classDaysOptions.map((day) => {
-                              const selected = field.value?.includes(day);
-
-                              return (
-                                <div
-                                  key={day}
-                                  className="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 cursor-pointer"
-                                  onClick={() => {
-                                    let newValue = field.value || [];
-
-                                    if (selected) {
-                                      newValue = newValue.filter(
-                                        (d) => d !== day,
-                                      );
-                                    } else {
-                                      if (newValue.length >= 5) return;
-                                      newValue = [...newValue, day];
-                                    }
-
-                                    field.onChange(newValue);
-                                  }}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={selected}
-                                    readOnly
-                                  />
-                                  <span>{day}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  /> */}
-
                 <FormField
                   control={form.control}
                   name="daysOfWeek"
@@ -508,19 +439,29 @@ export default function LiveClassCreationPage() {
                     <FormItem>
                       <FormLabel>Number of Weeks</FormLabel>
                       <FormControl>
-                        <Input
+                        {/* <Input
                           type="number"
                           placeholder="Enter number of weeks"
-                          min={1}
-                          max={52}
+                          // min={1}
+                          // max={52}
                           value={field.value as number | undefined} // ✅ cast here
                           onChange={(e) => {
                             let value = Number(e.target.value);
-                            if (value < 1) value = 1;
-                            if (value > 52) value = 52;
+                            // if (value < 1) value = 1;
+                            // if (value > 52) value = 52;
                             field.onChange(value);
                           }}
                           onBlur={field.onBlur}
+                        /> */}
+                        <Input
+                          // type="number"
+                          placeholder="Number of weeks"
+                          value={field.value as number | undefined} // ✅ cast here
+                          onChange={(e) => {
+                            let value = Number(e.target.value);
+
+                            field.onChange(value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -573,13 +514,13 @@ export default function LiveClassCreationPage() {
                         <Input
                           type="number"
                           placeholder="Enter session duration"
-                          min={30}
-                          max={180}
+                          // min={30}
+                          // max={180}
                           value={field.value as number | undefined}
                           onChange={(e) => {
                             let value = Number(e.target.value);
-                            if (value < 30) value = 30;
-                            if (value > 180) value = 180;
+                            // if (value < 30) value = 30;
+                            // if (value > 180) value = 180;
                             field.onChange(value);
                           }}
                           onBlur={field.onBlur}
@@ -600,13 +541,13 @@ export default function LiveClassCreationPage() {
                         <Input
                           type="number"
                           placeholder="Enter max students"
-                          min={1}
-                          max={50}
+                          // min={1}
+                          // max={50}
                           value={field.value as number | undefined}
                           onChange={(e) => {
                             let value = Number(e.target.value);
-                            if (value < 1) value = 1;
-                            if (value > 50) value = 50;
+                            // if (value < 1) value = 1;
+                            // if (value > 50) value = 50;
                             field.onChange(value);
                           }}
                           onBlur={field.onBlur}

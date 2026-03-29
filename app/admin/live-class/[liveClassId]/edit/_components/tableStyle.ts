@@ -8,7 +8,7 @@ export const StyleWrapper = styled.div`
   }
 
   .fc .fc-col-header-cell {
-    background: #747f8a !important;
+    background: #262624 !important;
   }
 
   /* remove ugly borders */
