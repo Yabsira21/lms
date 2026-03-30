@@ -70,3 +70,110 @@ export async function editLiveClass(
     };
   }
 }
+
+// Add these to your existing actions file
+
+export async function updateClass(
+  classId: string,
+  data: {
+    title: string;
+    startTime: Date;
+    endTime: Date;
+    status: "Scheduled" | "Ongoing" | "Completed";
+    liveClassId: string;
+  },
+): Promise<APIResponse> {
+  const session = await requireAdmin();
+
+  try {
+    // Check if class exists and user has permission
+    const existingClass = await prisma.class.findUnique({
+      where: { id: classId },
+      include: { liveClass: true },
+    });
+
+    if (!existingClass) {
+      return { status: "error", message: "Class not found" };
+    }
+
+    // Check if class is in the past
+    const now = new Date();
+    if (existingClass.startTime < now && data.status !== "Completed") {
+      return { status: "error", message: "Cannot edit past classes" };
+    }
+
+    // Check if trying to edit completed class
+    if (existingClass.status === "Completed") {
+      return { status: "error", message: "Cannot edit completed classes" };
+    }
+
+    // Check if start time is in the past
+    if (data.startTime < now) {
+      return {
+        status: "error",
+        message: "Cannot schedule classes in the past",
+      };
+    }
+
+    // Check if end time is after start time
+    if (data.endTime <= data.startTime) {
+      return { status: "error", message: "End time must be after start time" };
+    }
+
+    await prisma.class.update({
+      where: { id: classId },
+      data: {
+        title: data.title,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        status: data.status,
+      },
+    });
+
+    revalidatePath(`/admin/live-class/${data.liveClassId}/edit`);
+
+    return { status: "success", message: "Class updated successfully" };
+  } catch (error) {
+    console.error("Update class error:", error);
+    return { status: "error", message: "Failed to update class" };
+  }
+}
+
+export async function deleteClass(
+  classId: string,
+  liveClassId: string,
+): Promise<APIResponse> {
+  const session = await requireAdmin();
+
+  try {
+    const existingClass = await prisma.class.findUnique({
+      where: { id: classId },
+    });
+
+    if (!existingClass) {
+      return { status: "error", message: "Class not found" };
+    }
+
+    // Check if class is in the past
+    const now = new Date();
+    if (existingClass.startTime < now) {
+      return { status: "error", message: "Cannot delete past classes" };
+    }
+
+    // Check if class is completed
+    if (existingClass.status === "Completed") {
+      return { status: "error", message: "Cannot delete completed classes" };
+    }
+
+    await prisma.class.delete({
+      where: { id: classId },
+    });
+
+    revalidatePath(`/admin/live-class/${liveClassId}/edit`);
+
+    return { status: "success", message: "Class deleted successfully" };
+  } catch (error) {
+    console.error("Delete class error:", error);
+    return { status: "error", message: "Failed to delete class" };
+  }
+}

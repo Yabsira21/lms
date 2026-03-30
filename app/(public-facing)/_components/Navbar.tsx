@@ -44,7 +44,10 @@ export function Navbar() {
               { name: "Home", href: "/" },
               { name: "Courses", href: "/courses" },
               { name: "Dashboard", href: "/dashboard" },
-              { name: "Live Classes", href: "/live-classes" },
+              {
+                name: "Live Classes",
+                href: `${session?.user.role === "instructor" ? "/instructor/live-class" : "/live-classes"}`,
+              },
             ].map((item) => (
               <Link
                 key={item.name}

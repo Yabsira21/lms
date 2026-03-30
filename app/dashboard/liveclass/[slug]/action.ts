@@ -14,7 +14,7 @@ export async function sendLiveClassMessage(
     return { error: "Message cannot be empty" };
   }
 
-  // Check if user is enrolled
+  // Check if user is enrolled OR is the instructor
   const enrollment = await prisma.liveEnrollment.findUnique({
     where: {
       userId_liveClassId: {
@@ -24,8 +24,20 @@ export async function sendLiveClassMessage(
     },
   });
 
-  if (!enrollment || enrollment.status !== "Active") {
-    return { error: "Not enrolled" };
+  const liveClass = await prisma.liveClass.findUnique({
+    where: {
+      id: liveClassId,
+    },
+    select: {
+      instructorId: true,
+    },
+  });
+
+  const isEnrolled = enrollment?.status === "Active";
+  const isInstructor = liveClass?.instructorId === session.id;
+
+  if (!isEnrolled && !isInstructor) {
+    return { error: "Not authorized to send messages" };
   }
 
   // Create message
