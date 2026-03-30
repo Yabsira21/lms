@@ -45,15 +45,14 @@ export function LoginForm() {
   }
 
   async function signinWithGoogle() {
-    // await authClient.sign("github");
     startGoogleTransition(async () => {
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/",
         fetchOptions: {
           onSuccess: () => {
-            console.log("Successfully signed in with GitHub");
-            toast.success("Successfully signed in with GitHub");
+            console.log("Successfully signed in with Google");
+            toast.success("Successfully signed in with Google");
           },
           onError: (error) => {
             console.log(error);
