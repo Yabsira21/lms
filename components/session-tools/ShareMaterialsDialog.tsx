@@ -78,7 +78,7 @@ export default function ShareMaterialsDialog({ open, onClose, sessionId }: Props
 
         <div className="space-y-4">
           {/* Add new material */}
-          <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+          <div className="space-y-3 p-4 bg-muted/40 rounded-lg border border-border">
             <h4 className="text-sm font-medium">Add New Material</h4>
             <div className="space-y-2">
               <div>
@@ -114,17 +114,17 @@ export default function ShareMaterialsDialog({ open, onClose, sessionId }: Props
           {/* Shared materials list */}
           {resources.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Shared ({resources.length})</h4>
+              <h4 className="text-sm font-medium text-foreground">Shared ({resources.length})</h4>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {resources.map(r => (
-                  <div key={r.id} className="flex items-center gap-2 p-2 bg-white border rounded-lg">
-                    <Link2 className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <div key={r.id} className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg">
+                    <Link2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{r.title}</p>
-                      <p className="text-xs text-gray-500 truncate">{r.fileUrl}</p>
+                      <p className="text-xs text-muted-foreground truncate">{r.fileUrl}</p>
                     </div>
                     <a href={r.fileUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                      <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                     </a>
                     <button onClick={() => handleDelete(r.id)}>
                       <Trash2 className="h-4 w-4 text-red-400 hover:text-red-600" />
@@ -136,7 +136,7 @@ export default function ShareMaterialsDialog({ open, onClose, sessionId }: Props
           )}
 
           {resources.length === 0 && (
-            <p className="text-xs text-gray-500 text-center py-2">
+            <p className="text-xs text-muted-foreground text-center py-2">
               No materials shared yet. Add one above.
             </p>
           )}
