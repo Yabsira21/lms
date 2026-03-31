@@ -9,17 +9,18 @@ interface iAppProps {
 
 export default async function LiveClassLayout({ children, params }: iAppProps) {
   const { slug } = await params;
-  const { liveClass } = await getLiveClassSidebarData(slug);
+  const { liveClass, isInstructor } = await getLiveClassSidebarData(slug);
 
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
         <div className="flex flex-1">
-          {/* Sidebar - 300px width */}
+          {/* Sidebar */}
           <div className="w-80 border-r border-border shrink-0">
             <LiveClassSidebar
               liveClass={liveClass}
               liveClassId={liveClass.id}
+              isInstructor={isInstructor}
             />
           </div>
 

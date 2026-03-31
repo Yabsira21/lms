@@ -11,6 +11,7 @@ import {
   ChevronRight,
   MessageCircle,
   InfoIcon,
+  FolderOpenIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,13 +19,36 @@ import { usePathname } from "next/navigation";
 interface LiveClassSidebarProps {
   liveClass: LiveClassSideDataType["liveClass"];
   liveClassId: string;
+  isInstructor?: boolean;
 }
 
 export function LiveClassSidebar({
   liveClass,
   liveClassId,
+  isInstructor = false,
 }: LiveClassSidebarProps) {
   const pathname = usePathname();
+
+  const tabs = [
+    {
+      name: "Info",
+      href: `/dashboard/liveclass/${liveClass.slug}`,
+      icon: InfoIcon,
+      exact: true,
+    },
+    {
+      name: "Chat",
+      href: `/dashboard/liveclass/${liveClass.slug}/chat`,
+      icon: MessageCircle,
+      exact: false,
+    },
+    {
+      name: "Resources",
+      href: `/dashboard/liveclass/${liveClass.slug}/resources`,
+      icon: FolderOpenIcon,
+      exact: false,
+    },
+  ];
 
   return (
     <div className="h-full flex flex-col">
@@ -58,33 +82,31 @@ export function LiveClassSidebar({
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="border-b">
-        <div className="flex">
-          <Link
-            href={`/dashboard/liveclass/${liveClass.slug}`}
-            className={cn(
-              "flex-1 px-3 py-2 text-sm font-medium text-center transition-colors",
-              pathname === `/dashboard/liveclass/${liveClass.slug}`
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <InfoIcon className="size-4 inline mr-2" />
-            Info
-          </Link>
-          <Link
-            href={`/dashboard/liveclass/${liveClass.slug}/chat`}
-            className={cn(
-              "flex-1 px-3 py-2 text-sm font-medium text-center transition-colors",
-              pathname.includes("/chat")
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <MessageCircle className="size-4 inline mr-2" />
-            Group Chat
-          </Link>
+      {/* Navigation Tabs - Horizontal Scroll for mobile, flex wrap on desktop */}
+      <div className="border-b overflow-x-auto">
+        <div className="flex min-w-max md:min-w-0">
+          {tabs.map((tab) => {
+            const isActive = tab.exact
+              ? pathname === tab.href
+              : pathname.includes(tab.href) &&
+                tab.href !== `/dashboard/liveclass/${liveClass.slug}`;
+
+            return (
+              <Link
+                key={tab.name}
+                href={tab.href}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap",
+                  isActive
+                    ? "border-b-2 border-primary text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+                )}
+              >
+                <tab.icon className="size-4" />
+                {tab.name}
+              </Link>
+            );
+          })}
         </div>
       </div>
 

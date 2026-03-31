@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/app/data/admin/require-admin";
+import { requireUser } from "@/app/data/user/require-user";
 import { S3 } from "@/lib/S3Clinet";
 import arcjet, { detectBot, fixedWindow } from "@/lib/arcjet";
 import { env } from "@/lib/env";
@@ -27,29 +28,27 @@ export const fileUploadSchema = z.object({
   isImage: z.boolean(),
 });
 
-const aj = arcjet
-  
-  .withRule(
-    fixedWindow({
-      mode: "LIVE",
-      window: "1m", // 1 minute
-      max: 5, // limit each IP to 5 requests per windowMs})
-    })
-  );
+const aj = arcjet.withRule(
+  fixedWindow({
+    mode: "LIVE",
+    window: "1m", // 1 minute
+    max: 5, // limit each IP to 5 requests per windowMs})
+  }),
+);
 
 export async function POST(request: Request) {
   // const session = await auth.api.getSession({ headers: await headers() });
 
-  const session = await requireAdmin();
+  const session = await requireUser();
   try {
     const decision = await aj.protect(request, {
-      fingerprint: session?.user.id as string,
+      fingerprint: session?.id as string,
     });
 
     if (decision.isDenied()) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json(
       { error: "Failed to generate presigned URL" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
