@@ -65,7 +65,7 @@ function AttendanceTimeline({ intervals, totalIntervals }: { intervals: Interval
   });
 
   if (slots.length === 0) {
-    return <p className="text-xs text-gray-500 text-center py-4">No interval data yet.</p>;
+    return <p className="text-xs text-muted-foreground text-center py-4">No interval data yet.</p>;
   }
 
   return (
@@ -73,7 +73,7 @@ function AttendanceTimeline({ intervals, totalIntervals }: { intervals: Interval
       <div className="flex flex-wrap gap-1">
         {slots.map((slot, i) => {
           const color =
-            slot === null          ? 'bg-gray-200'   :
+            slot === null          ? 'bg-muted'   :
             slot.status === 'VERIFIED' ? 'bg-green-500' : 'bg-red-500';
           const label =
             slot === null          ? 'No data'       :
@@ -90,10 +90,10 @@ function AttendanceTimeline({ intervals, totalIntervals }: { intervals: Interval
           );
         })}
       </div>
-      <div className="flex items-center gap-4 text-xs text-gray-500">
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-green-500 inline-block" /> Verified</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-500 inline-block" /> Unverified</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-gray-200 inline-block" /> No data</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-muted inline-block" /> No data</span>
       </div>
     </div>
   );
@@ -147,7 +147,7 @@ function StudentDetailDialog({
             </Avatar>
             <div>
               <p className="font-semibold">{student.name}</p>
-              <p className="text-xs text-gray-500 font-normal">{student.email}</p>
+              <p className="text-xs text-muted-foreground font-normal">{student.email}</p>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -156,19 +156,19 @@ function StudentDetailDialog({
           {/* Summary stats */}
           {summary && (
             <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-3 bg-gray-50 rounded-lg">
+              <div className="text-center p-3 bg-muted/40 rounded-lg">
                 <p className="text-2xl font-bold">{summary.totalIntervals}</p>
-                <p className="text-xs text-gray-500">Total Intervals</p>
+                <p className="text-xs text-muted-foreground">Total Intervals</p>
               </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 border border-green-200/70 dark:border-green-900 rounded-lg">
                 <p className="text-2xl font-bold text-green-600">{summary.verifiedIntervals}</p>
-                <p className="text-xs text-gray-500">Verified</p>
+                <p className="text-xs text-muted-foreground">Verified</p>
               </div>
-              <div className={`text-center p-3 rounded-lg ${summary.verifiedPct >= 75 ? 'bg-green-50' : 'bg-red-50'}`}>
+              <div className={`text-center p-3 rounded-lg ${summary.verifiedPct >= 75 ? 'bg-green-50 dark:bg-green-950/30' : 'bg-red-50 dark:bg-red-950/30'}`}>
                 <p className={`text-2xl font-bold ${summary.verifiedPct >= 75 ? 'text-green-600' : 'text-red-600'}`}>
                   {summary.verifiedPct}%
                 </p>
-                <p className="text-xs text-gray-500">Verified Rate</p>
+                <p className="text-xs text-muted-foreground">Verified Rate</p>
               </div>
             </div>
           )}
@@ -183,7 +183,7 @@ function StudentDetailDialog({
                 <p className={`font-semibold text-sm ${summary.isPresent ? 'text-green-700' : 'text-red-700'}`}>
                   {summary.isPresent ? 'Formally Present' : 'Formally Absent'}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {summary.isPresent
                     ? `≥ 75% verified intervals — attendance confirmed`
                     : `< 75% verified intervals — below threshold`}
@@ -202,7 +202,7 @@ function StudentDetailDialog({
             </div>
             {loading ? (
               <div className="flex justify-center py-6">
-                <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : (
               <AttendanceTimeline intervals={intervals} totalIntervals={summary?.totalIntervals ?? 0} />
@@ -220,9 +220,9 @@ function StudentDetailDialog({
                 {intervals
                   .filter(i => i.status === 'UNVERIFIED')
                   .map(i => (
-                    <div key={i.intervalIndex} className="flex items-center justify-between text-xs bg-red-50 border border-red-100 rounded px-3 py-1.5">
+                    <div key={i.intervalIndex} className="flex items-center justify-between text-xs bg-red-50 dark:bg-red-950/30 border border-red-200/70 dark:border-red-900 rounded px-3 py-1.5">
                       <span className="text-red-700 font-medium">Minute {i.intervalIndex + 1}</span>
-                      <span className="text-gray-500">{new Date(i.timestamp).toLocaleTimeString()}</span>
+                      <span className="text-muted-foreground">{new Date(i.timestamp).toLocaleTimeString()}</span>
                       <Badge variant="destructive" className="text-xs py-0">UNVERIFIED</Badge>
                     </div>
                   ))}
@@ -338,9 +338,9 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-card border-b border-border">
         <div className="max-w-[1600px] mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
@@ -381,12 +381,12 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-gray-600" />
+                  <FileText className="h-5 w-5 text-muted-foreground" />
                   <span className="font-semibold">{session.liveClass.title}</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-sm text-gray-600">{session.title}</span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-sm text-muted-foreground">{session.title}</span>
                 </div>
-                <div className="flex items-center gap-6 text-sm text-gray-600">
+                <div className="flex items-center gap-6 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span>{new Date(session.startTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
@@ -421,15 +421,15 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
-            { label: 'Total', value: stats.total, icon: Users, color: 'text-gray-600', bg: 'bg-gray-100' },
-            { label: 'Present (≥75%)', value: stats.present, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-100' },
-            { label: 'Absent', value: stats.absent, icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' },
-            { label: 'Attendance Rate', value: `${stats.attendanceRate}%`, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-100' },
+            { label: 'Total', value: stats.total, icon: Users, color: 'text-muted-foreground', bg: 'bg-muted' },
+            { label: 'Present (≥75%)', value: stats.present, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-100 dark:bg-green-950/30' },
+            { label: 'Absent', value: stats.absent, icon: XCircle, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-950/30' },
+            { label: 'Attendance Rate', value: `${stats.attendanceRate}%`, icon: Clock, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-950/30' },
           ].map(({ label, value, icon: Icon, color, bg }) => (
             <Card key={label} className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">{label}</p>
+                  <p className="text-xs text-muted-foreground mb-1">{label}</p>
                   <p className={`text-3xl font-bold ${color}`}>{value}</p>
                 </div>
                 <div className={`h-11 w-11 rounded-full ${bg} flex items-center justify-center`}>
@@ -441,17 +441,17 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
         </div>
 
         {/* Live indicator */}
-        <div className="mb-4 flex items-center gap-2 text-sm text-gray-600">
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
           <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
           <span className="font-medium">Real-Time Monitoring</span>
-          <span className="text-gray-400">· 75% threshold · 1-min intervals · 3-strike buffer</span>
+          <span className="text-muted-foreground">· 75% threshold · 1-min intervals · 3-strike buffer</span>
         </div>
 
         {/* Filters */}
         <Card className="p-4 mb-4">
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by name or email…"
                 value={searchQuery}
@@ -477,18 +477,18 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-muted/40 border-b">
                 <tr>
                   {['Student', 'Verified %', 'Intervals', 'Timeline', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th key={h} className="px-5 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
+              <tbody className="bg-card divide-y divide-border">
                 {paginatedStudents.map(student => (
-                  <tr key={student.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={student.id} className="hover:bg-muted/40 transition-colors">
                     {/* Student */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -498,7 +498,7 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
                         </Avatar>
                         <div>
                           <p className="text-sm font-medium">{student.name}</p>
-                          <p className="text-xs text-gray-500">{student.email}</p>
+                          <p className="text-xs text-muted-foreground">{student.email}</p>
                         </div>
                       </div>
                     </td>
@@ -506,7 +506,7 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
                     {/* Verified % */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${student.verifiedPct >= 75 ? 'bg-green-500' : 'bg-red-500'}`}
                             style={{ width: `${student.verifiedPct}%` }}
@@ -519,7 +519,7 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
                     </td>
 
                     {/* Intervals */}
-                    <td className="px-5 py-4 text-sm text-gray-600">
+                    <td className="px-5 py-4 text-sm text-muted-foreground">
                       {student.verifiedIntervals}/{student.totalIntervals}
                     </td>
 
@@ -532,13 +532,13 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
                           return (
                             <div
                               key={i}
-                              className="w-2.5 h-2.5 rounded-sm bg-gray-200"
+                              className="w-2.5 h-2.5 rounded-sm bg-muted"
                               title={`Interval ${i + 1}`}
                             />
                           );
                         })}
                         {student.totalIntervals === 0 && (
-                          <span className="text-xs text-gray-400">No data</span>
+                          <span className="text-xs text-muted-foreground">No data</span>
                         )}
                       </div>
                     </td>
@@ -556,7 +556,7 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
                         </Badge>
                       )}
                       {student.attendanceStatus === 'Late' && (
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 gap-1">
+                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-300 gap-1">
                           <Clock className="h-3 w-3" />Late
                         </Badge>
                       )}
@@ -582,7 +582,7 @@ export default function AttendanceMonitoring({ session }: AttendanceMonitoringPr
 
           {/* Pagination */}
           <div className="px-5 py-4 border-t flex items-center justify-between">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Showing {((currentPage - 1) * itemsPerPage) + 1}–{Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length}
             </p>
             <div className="flex items-center gap-1">

@@ -50,10 +50,10 @@ const Whiteboard = dynamic(
 
 // ─── Student Participants Tab ─────────────────────────────────────────────────
 // Receives participants as a prop — data fetched inside LiveKit context by the caller
-function StudentParticipantsTab({ participants, instructorId }: {
-  participants: any[];
+function StudentParticipantsTab({ instructorId }: {
   instructorId: string;
 }) {
+  const participants = useParticipants();
   const instructor = participants.find((p: any) => p.identity === instructorId);
   const students = participants.filter((p: any) => p.identity !== instructorId);
   const total = participants.length;
@@ -61,7 +61,7 @@ function StudentParticipantsTab({ participants, instructorId }: {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-foreground">
           {total} participant{total !== 1 ? 's' : ''}
         </span>
         <Badge variant="secondary" className="bg-green-100 text-green-700">
@@ -94,7 +94,7 @@ function StudentParticipantsTab({ participants, instructorId }: {
         ))}
 
         {total === 0 && (
-          <p className="text-xs text-gray-400 text-center py-4">
+          <p className="text-xs text-muted-foreground text-center py-4">
             No participants yet
           </p>
         )}
@@ -113,8 +113,8 @@ function ParticipantRow({ name, isInstructor, isSpeaking, isMicEnabled, isCamera
   const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
-    <div className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors ${isSpeaking ? 'bg-green-50 border border-green-200' : 'hover:bg-gray-50'}`}>
-      <div className="relative flex-shrink-0">
+    <div className={`flex items-center gap-2.5 p-2 rounded-lg transition-colors ${isSpeaking ? 'bg-green-50 border border-green-200' : 'hover:bg-muted/40'}`}>
+      <div className="relative shrink-0">
         <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold text-white ${isInstructor ? 'bg-blue-500' : 'bg-orange-500'}`}>
           {initials}
         </div>
@@ -124,18 +124,18 @@ function ParticipantRow({ name, isInstructor, isSpeaking, isMicEnabled, isCamera
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
+          <span className="text-sm font-medium text-foreground truncate">{name}</span>
           {isInstructor && (
             <Badge variant="secondary" className="text-xs py-0 px-1.5 h-4">Host</Badge>
           )}
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           {isSpeaking ? 'Speaking…' : isInstructor ? 'Presenting' : 'Attending'}
         </p>
       </div>
 
       {/* Mic / Camera indicators */}
-      <div className="flex items-center gap-1 flex-shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         {!isMicEnabled && (
           <MicOff className="h-3.5 w-3.5 text-red-400" />
         )}
@@ -176,7 +176,7 @@ function StudentResourcesTab({ sessionId, sessionActive, instructorName }: {
 
   if (loading && resources.length === 0) {
     return (
-      <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
+      <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
         <RefreshCw className="h-4 w-4 animate-spin" />
         <span className="text-sm">Loading materials…</span>
       </div>
@@ -187,8 +187,8 @@ function StudentResourcesTab({ sessionId, sessionActive, instructorName }: {
     return (
       <div className="text-center py-8">
         <FileText className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-        <p className="text-xs text-gray-500">No materials shared yet.</p>
-        <p className="text-xs text-gray-400">The instructor will share resources here.</p>
+        <p className="text-xs text-muted-foreground">No materials shared yet.</p>
+        <p className="text-xs text-muted-foreground">The instructor will share resources here.</p>
       </div>
     );
   }
@@ -196,8 +196,8 @@ function StudentResourcesTab({ sessionId, sessionActive, instructorName }: {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-medium text-gray-700">Shared Materials ({resources.length})</p>
-        <button onClick={fetchResources} className="text-gray-400 hover:text-gray-600">
+        <p className="text-sm font-medium text-foreground">Shared Materials ({resources.length})</p>
+        <button onClick={fetchResources} className="text-muted-foreground hover:text-muted-foreground">
           <RefreshCw className="h-3.5 w-3.5" />
         </button>
       </div>
@@ -207,18 +207,18 @@ function StudentResourcesTab({ sessionId, sessionActive, instructorName }: {
           href={r.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors group"
+          className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border border-border hover:border-orange-300 hover:bg-orange-50 transition-colors group"
         >
-          <div className="h-9 w-9 rounded bg-orange-100 flex items-center justify-center flex-shrink-0">
+          <div className="h-9 w-9 rounded bg-orange-100 flex items-center justify-center shrink-0">
             <Link2 className="h-4 w-4 text-orange-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 group-hover:text-orange-600 truncate">
+            <p className="text-sm font-medium text-foreground group-hover:text-orange-600 truncate">
               {r.title}
             </p>
-            <p className="text-xs text-gray-500 truncate">Shared by {instructorName}</p>
+            <p className="text-xs text-muted-foreground truncate">Shared by {instructorName}</p>
           </div>
-          <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-orange-500 flex-shrink-0" />
+          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-orange-500 shrink-0" />
         </a>
       ))}
     </div>
@@ -282,11 +282,11 @@ function StudentPollWidget({ sessionId, userId, sessionActive }: {
   const maxVotes = Math.max(...Object.values(poll.counts), 1);
 
   return (
-    <Card className="shadow-sm border-orange-200 bg-orange-50/50 mt-4">
+    <Card className="shadow-sm border-orange-200/80 dark:border-orange-900 bg-orange-50/60 dark:bg-orange-950/30 mt-4">
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-orange-500" />
-          <span className="text-sm font-semibold text-orange-700">Live Poll</span>
+          <span className="text-sm font-semibold text-orange-700 dark:text-orange-300">Live Poll</span>
           <Badge className="bg-orange-500 text-white text-xs animate-pulse ml-auto">Active</Badge>
         </div>
 
@@ -306,25 +306,25 @@ function StudentPollWidget({ sessionId, userId, sessionActive }: {
                 disabled={!!poll.myVote || voting}
                 className={`w-full text-left rounded-lg border transition-all ${
                   isMyVote
-                    ? 'border-orange-500 bg-orange-100'
+                    ? 'border-orange-500 bg-orange-100 dark:bg-orange-900/50'
                     : poll.myVote
-                    ? 'border-gray-200 bg-white cursor-default'
-                    : 'border-gray-200 bg-white hover:border-orange-400 hover:bg-orange-50 cursor-pointer'
+                    ? 'border-border bg-card cursor-default'
+                    : 'border-border bg-card hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 cursor-pointer'
                 }`}
               >
                 <div className="p-2.5 space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className={isMyVote ? 'font-semibold text-orange-700' : ''}>
+                    <span className={isMyVote ? 'font-semibold text-orange-700 dark:text-orange-300' : ''}>
                       {option} {isMyVote && '✓'}
                     </span>
                     {poll.myVote && (
-                      <span className={`text-xs ${isLeading ? 'font-semibold text-orange-600' : 'text-gray-500'}`}>
+                      <span className={`text-xs ${isLeading ? 'font-semibold text-orange-600' : 'text-muted-foreground'}`}>
                         {count} ({pct}%)
                       </span>
                     )}
                   </div>
                   {poll.myVote && (
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${isLeading ? 'bg-orange-500' : 'bg-blue-400'}`}
                         style={{ width: `${pct}%` }}
@@ -338,10 +338,10 @@ function StudentPollWidget({ sessionId, userId, sessionActive }: {
         </div>
 
         {!poll.myVote && (
-          <p className="text-xs text-gray-500 text-center">Tap an option to vote</p>
+          <p className="text-xs text-muted-foreground text-center">Tap an option to vote</p>
         )}
         {poll.myVote && (
-          <p className="text-xs text-gray-500 text-center">{poll.totalVotes} total vote{poll.totalVotes !== 1 ? 's' : ''}</p>
+          <p className="text-xs text-muted-foreground text-center">{poll.totalVotes} total vote{poll.totalVotes !== 1 ? 's' : ''}</p>
         )}
       </div>
     </Card>
@@ -366,9 +366,13 @@ export default function StudentSessionView({ session, user }: StudentSessionView
     return 'not-started';
   });
   const [elapsedTime, setElapsedTime] = useState<number>(() => {
-    // Seed from actual start time if session is already ongoing
+    // Seed from server timestamps (paused sessions freeze at pause time).
     if ((session.status === 'Ongoing' || session.status === 'Paused') && session.actualStartTime) {
-      return Math.floor((Date.now() - new Date(session.actualStartTime).getTime()) / 1000);
+      const startMs = new Date(session.actualStartTime).getTime();
+      const endMs = session.status === 'Paused' && session.endTime
+        ? new Date(session.endTime).getTime()
+        : Date.now();
+      return Math.max(0, Math.floor((endMs - startMs) / 1000));
     }
     return 0;
   });
@@ -389,8 +393,60 @@ export default function StudentSessionView({ session, user }: StudentSessionView
   const roomName = `session-${session.id}`;
   const participantName = user.name || user.email;
 
-  // Poll session status — syncs with instructor's Start / Pause / End actions
+  const applySessionStatus = useCallback((data: {
+    status: string;
+    actualStartTime?: string | null;
+    endTime?: string | null;
+  }) => {
+    const map: Record<string, 'not-started' | 'ongoing' | 'paused' | 'ended'> = {
+      Scheduled:  'not-started',
+      Ongoing:    'ongoing',
+      Paused:     'paused',
+      Completed:  'ended',
+      Cancelled:  'ended',
+    };
+    const newStatus = map[data.status] ?? 'not-started';
+
+    if (data.actualStartTime) {
+      const startMs = new Date(data.actualStartTime).getTime();
+      const effectiveEndMs =
+        newStatus === 'paused' && data.endTime ? new Date(data.endTime).getTime() : Date.now();
+      setElapsedTime(Math.max(0, Math.floor((effectiveEndMs - startMs) / 1000)));
+    }
+
+    setSessionStatus(prev => {
+      if (prev !== newStatus) {
+        if (newStatus === 'ongoing') toast.success('Session started!');
+        if (newStatus === 'paused') toast.info('Session paused by instructor');
+        if (newStatus === 'ended') {
+          toast.info('Session ended by instructor. Redirecting…');
+          setTimeout(() => router.push('/dashboard'), 3000);
+        }
+      }
+      return newStatus;
+    });
+  }, [router]);
+
+  // Real-time session status stream (SSE) + fallback polling
   useEffect(() => {
+    let closedByCleanup = false;
+
+    const statusStream = new EventSource(`/api/session/${session.id}/status/stream`);
+    statusStream.addEventListener('status', (event) => {
+      try {
+        const data = JSON.parse((event as MessageEvent).data);
+        applySessionStatus(data);
+      } catch (error) {
+        console.error('Error parsing status stream event:', error);
+      }
+    });
+    statusStream.addEventListener('error', () => {
+      // Keep fallback polling active; EventSource auto-reconnects.
+      if (!closedByCleanup) {
+        console.warn('Session status stream disconnected, relying on fallback polling');
+      }
+    });
+
     const checkSessionStatus = async () => {
       try {
         const response = await fetch(`/api/session/${session.id}/status`);
@@ -399,42 +455,20 @@ export default function StudentSessionView({ session, user }: StudentSessionView
           return;
         }
         const data = await response.json();
-        console.log('[Student Poll] status:', data.status, '| actualStartTime:', data.actualStartTime);
-
-        const map: Record<string, 'not-started' | 'ongoing' | 'paused' | 'ended'> = {
-          Scheduled:  'not-started',
-          Ongoing:    'ongoing',
-          Paused:     'paused',
-          Completed:  'ended',
-          Cancelled:  'ended',
-        };
-        const newStatus = map[data.status] ?? 'not-started';
-
-        setSessionStatus(prev => {
-          // Sync elapsed time from actualStartTime when transitioning into 'ongoing'
-          if (prev !== 'ongoing' && newStatus === 'ongoing' && data.actualStartTime) {
-            setElapsedTime(Math.floor((Date.now() - new Date(data.actualStartTime).getTime()) / 1000));
-          }
-          // Show toast on state changes
-          if (prev !== newStatus) {
-            if (newStatus === 'ongoing')  toast.success('Session started!');
-            if (newStatus === 'paused')   toast.info('Session paused by instructor');
-            if (newStatus === 'ended') {
-              toast.info('Session ended by instructor. Redirecting…');
-              setTimeout(() => router.push('/dashboard'), 3000);
-            }
-          }
-          return newStatus;
-        });
+        applySessionStatus(data);
       } catch (error) {
         console.error('Error checking session status:', error);
       }
     };
 
     checkSessionStatus();
-    const interval = setInterval(checkSessionStatus, 5000);
-    return () => clearInterval(interval);
-  }, [session.id, router]);
+    const interval = setInterval(checkSessionStatus, 10000);
+    return () => {
+      closedByCleanup = true;
+      statusStream.close();
+      clearInterval(interval);
+    };
+  }, [session.id, applySessionStatus]);
 
   // Timer — only counts when session is 'ongoing', pauses on 'paused', resets on 'not-started'
   useEffect(() => {
@@ -566,9 +600,9 @@ export default function StudentSessionView({ session, user }: StudentSessionView
       onDisconnect={() => toast.info('Disconnected from session')}
     >
       {({ isMuted, isCameraOff, isScreenSharing, toggleMute, toggleCamera, isConnected }) => (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-card border-b border-border">
         <div className="max-w-[1600px] mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold mb-1">Live Class Session</h1>
         </div>
@@ -579,7 +613,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
           {/* Main Content */}
           <div className="space-y-4">
             {/* Course Info Bar */}
-            <div className="bg-white rounded-lg p-4 shadow-sm">
+            <div className="bg-card rounded-lg p-4 shadow-sm border border-border">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
@@ -607,19 +641,19 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p className="text-sm text-muted-foreground mb-1">
                     Session: {session.title}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Instructor: {instructorName} • {new Date(session.startTime).toLocaleDateString()} • {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <div className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                  <div className="flex items-center gap-1 text-sm font-medium text-foreground">
                     <Clock className="h-4 w-4" />
                     {formatTime(elapsedTime)}
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {sessionStatus === 'ongoing'     ? 'Session in progress' :
                      sessionStatus === 'paused'      ? 'Session paused' :
                      sessionStatus === 'not-started' ? 'Waiting to start' :
@@ -748,47 +782,47 @@ export default function StudentSessionView({ session, user }: StudentSessionView
               {/* Controls - Only show when NOT in fullscreen */}
               {!isFullscreen && (
               <Card className="overflow-hidden shadow-sm mt-4">
-              <div className="bg-white p-6">
+              <div className="bg-card p-6">
                 <div className="flex items-center justify-center gap-6">
                   <button
                     onClick={toggleMute}
                     className="flex flex-col items-center gap-2 group"
                   >
-                    <div className={`p-4 rounded-full ${isMuted ? 'bg-red-500' : 'bg-gray-200'} transition-colors`}>
+                    <div className={`p-4 rounded-full ${isMuted ? 'bg-red-500' : 'bg-muted'} transition-colors`}>
                       {isMuted ? (
                         <MicOff className="h-6 w-6 text-white" />
                       ) : (
-                        <Mic className="h-6 w-6 text-gray-700" />
+                        <Mic className="h-6 w-6 text-foreground" />
                       )}
                     </div>
-                    <span className="text-sm text-gray-700">{isMuted ? 'Muted' : 'Unmute'}</span>
+                    <span className="text-sm text-foreground">{isMuted ? 'Muted' : 'Unmute'}</span>
                   </button>
                   
                   <button
                     onClick={toggleCamera}
                     className="flex flex-col items-center gap-2 group"
                   >
-                    <div className={`p-4 rounded-full ${isCameraOff ? 'bg-gray-200' : 'bg-gray-200'} transition-colors`}>
+                    <div className={`p-4 rounded-full ${isCameraOff ? 'bg-muted' : 'bg-muted'} transition-colors`}>
                       {isCameraOff ? (
-                        <VideoOff className="h-6 w-6 text-gray-700" />
+                        <VideoOff className="h-6 w-6 text-foreground" />
                       ) : (
-                        <Video className="h-6 w-6 text-gray-700" />
+                        <Video className="h-6 w-6 text-foreground" />
                       )}
                     </div>
-                    <span className="text-sm text-gray-700">{isCameraOff ? 'Camera On' : 'Stop Video'}</span>
+                    <span className="text-sm text-foreground">{isCameraOff ? 'Camera On' : 'Stop Video'}</span>
                   </button>
                   
                   <button
                     onClick={handleRaiseHand}
                     className="flex flex-col items-center gap-2 group"
                   >
-                    <div className={`p-4 rounded-full ${handRaised ? 'bg-orange-500' : 'bg-gray-200'} transition-colors relative`}>
-                      <Hand className={`h-6 w-6 ${handRaised ? 'text-white' : 'text-gray-700'}`} />
+                    <div className={`p-4 rounded-full ${handRaised ? 'bg-orange-500' : 'bg-muted'} transition-colors relative`}>
+                      <Hand className={`h-6 w-6 ${handRaised ? 'text-white' : 'text-foreground'}`} />
                       {handRaised && (
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
                       )}
                     </div>
-                    <span className="text-sm text-gray-700">
+                    <span className="text-sm text-foreground">
                       {handRaised ? 'Hand Raised' : 'Raise Hand'}
                       {handRaised && <span className="text-orange-500 ml-1">●</span>}
                     </span>
@@ -802,7 +836,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                     <div className="p-4 rounded-full bg-red-500 transition-colors disabled:opacity-50">
                       <LogOut className="h-6 w-6 text-white" />
                     </div>
-                    <span className="text-sm text-gray-700">{isLeaving ? 'Leaving...' : 'Leave Session'}</span>
+                    <span className="text-sm text-foreground">{isLeaving ? 'Leaving...' : 'Leave Session'}</span>
                   </button>
                 </div>
               </div>
@@ -813,8 +847,8 @@ export default function StudentSessionView({ session, user }: StudentSessionView
           {/* Right Sidebar */}
           <div className="space-y-4">
             {/* File Notification */}
-            {/* <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-              <div className="text-xs text-gray-600 mb-1">Instructor shared a new file:</div>
+            {/* <div className="bg-white rounded-lg p-3 shadow-sm border border-border">
+              <div className="text-xs text-muted-foreground mb-1">Instructor shared a new file:</div>
               <div className="text-sm font-medium">Lecture Slides - Week 6.pdf</div>
             </div> */}
 
@@ -841,7 +875,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                     className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'chat'
                         ? 'border-orange-500 text-orange-500'
-                        : 'border-transparent text-gray-600 hover:text-gray-900'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     Chat
@@ -851,7 +885,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                     className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'participants'
                         ? 'border-orange-500 text-orange-500'
-                        : 'border-transparent text-gray-600 hover:text-gray-900'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     Participants
@@ -861,7 +895,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                     className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                       activeTab === 'resources'
                         ? 'border-orange-500 text-orange-500'
-                        : 'border-transparent text-gray-600 hover:text-gray-900'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     Resources
@@ -881,10 +915,10 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                             <div className={`max-w-[85%] ${isOwnMessage ? 'order-2' : 'order-1'}`}>
                               {/* Sender name and time */}
                               <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-                                <span className="text-xs font-semibold text-gray-700">
+                                <span className="text-xs font-semibold text-foreground">
                                   {msg.sender}
                                 </span>
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-muted-foreground">
                                   {msg.time}
                                 </span>
                               </div>
@@ -892,9 +926,9 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                               <div className={`rounded-2xl px-4 py-2 ${
                                 isOwnMessage 
                                   ? 'bg-orange-500 text-white rounded-tr-sm' 
-                                  : 'bg-gray-100 text-gray-900 rounded-tl-sm'
+                                  : 'bg-muted text-foreground rounded-tl-sm'
                               }`}>
-                                <p className="text-sm leading-relaxed break-words">
+                                <p className="text-sm leading-relaxed wrap-break-word">
                                   {msg.text}
                                 </p>
                               </div>
@@ -914,12 +948,12 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                            className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50 hover:bg-white transition-colors"
+                            className="w-full px-4 py-2.5 pr-10 border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-muted/40 hover:bg-white transition-colors"
                           />
                           {newMessage && (
                             <button
                               onClick={() => setNewMessage('')}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                             >
                               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -936,7 +970,7 @@ export default function StudentSessionView({ session, user }: StudentSessionView
                           <Send className="h-4 w-4" />
                         </Button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2 text-center">
+                      <p className="text-xs text-muted-foreground mt-2 text-center">
                         Press Enter to send
                       </p>
                     </div>
