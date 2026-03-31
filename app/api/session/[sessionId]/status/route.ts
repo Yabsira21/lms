@@ -80,9 +80,36 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
       );
     }
 
-    const updateData: any = { status, updatedAt: new Date() };
-    if (endTime) updateData.endTime = new Date(endTime);
-    if (actualStartTime) updateData.actualStartTime = new Date(actualStartTime);
+    const now = new Date();
+    const updateData: any = { status, updatedAt: now };
+
+    // Start: instructor can set the initial anchor time.
+    if (actualStartTime) {
+      updateData.actualStartTime = new Date(actualStartTime);
+    }
+
+    // Pause: store pause timestamp in endTime to freeze elapsed time calculations.
+    if (status === 'Paused') {
+      updateData.endTime = now;
+    }
+
+    // Resume from paused: shift actualStartTime forward by pause duration so elapsed
+    // remains strictly "active teaching time" and doesn't include paused minutes.
+    if (
+      status === 'Ongoing' &&
+      classSession.status === 'Paused' &&
+      classSession.actualStartTime &&
+      classSession.endTime
+    ) {
+      const pausedMs = now.getTime() - classSession.endTime.getTime();
+      updateData.actualStartTime = new Date(classSession.actualStartTime.getTime() + pausedMs);
+      updateData.endTime = null;
+    }
+
+    // End/cancel: persist final end time.
+    if (status === 'Completed' || status === 'Cancelled') {
+      updateData.endTime = endTime ? new Date(endTime) : now;
+    }
 
     const updated = await prisma.class.update({
       where: { id: sessionId },

@@ -106,7 +106,7 @@ function RaisedHandsPanel({ sessionId }: { sessionId: string }) {
 
   return (
     <Card className="shadow-sm">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Hand className="h-4 w-4 text-orange-500" />
@@ -121,7 +121,7 @@ function RaisedHandsPanel({ sessionId }: { sessionId: string }) {
             {hands.length > 1 && (
               <button
                 onClick={dismissAll}
-                className="text-xs text-gray-400 hover:text-gray-600 underline"
+                className="text-xs text-muted-foreground hover:text-muted-foreground underline"
               >
                 Dismiss all
               </button>
@@ -131,7 +131,7 @@ function RaisedHandsPanel({ sessionId }: { sessionId: string }) {
       </div>
       <div className="p-3">
         {hands.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-3">
+          <p className="text-xs text-muted-foreground text-center py-3">
             No hands raised
           </p>
         ) : (
@@ -139,20 +139,20 @@ function RaisedHandsPanel({ sessionId }: { sessionId: string }) {
             {hands.map((h, i) => (
               <div
                 key={h.userId}
-                className="flex items-center gap-2 p-2 bg-orange-50 border border-orange-200 rounded-lg"
+                className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200/80 dark:border-orange-900 rounded-lg"
               >
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center font-semibold">
+                <div className="shrink-0 w-6 h-6 rounded-full bg-orange-500 text-white text-xs flex items-center justify-center font-semibold">
                   {i + 1}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{h.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {new Date(h.raisedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
                 <button
                   onClick={() => dismiss(h.userId)}
-                  className="flex-shrink-0 p-1 rounded hover:bg-orange-100 text-orange-400 hover:text-orange-600 transition-colors"
+                  className="shrink-0 p-1 rounded hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-400 hover:text-orange-600 transition-colors"
                   title="Dismiss"
                 >
                   <XCircle className="h-4 w-4" />
@@ -190,9 +190,24 @@ export default function InstructorSessionView({ session, user }: InstructorSessi
     { id: 3, type: 'warning', text: 'Face not detected for Sara Ahmed (3 attempts)', time: '10:05 AM', icon: '⚠️' }
   ]);
 
-  // Session management state
-  const [sessionStatus, setSessionStatus] = useState<'not-started' | 'ongoing' | 'paused' | 'ended'>('not-started');
-  const [elapsedTime, setElapsedTime] = useState(0); // in seconds
+  // Session management state (seed from persisted DB status/timestamps).
+  const [sessionStatus, setSessionStatus] = useState<'not-started' | 'ongoing' | 'paused' | 'ended'>(() => {
+    if (session.status === 'Ongoing') return 'ongoing';
+    if (session.status === 'Paused') return 'paused';
+    if (session.status === 'Completed' || session.status === 'Cancelled') return 'ended';
+    return 'not-started';
+  });
+  const [elapsedTime, setElapsedTime] = useState(() => {
+    if ((session.status === 'Ongoing' || session.status === 'Paused') && session.actualStartTime) {
+      const startMs = new Date(session.actualStartTime).getTime();
+      const endMs =
+        session.status === 'Paused' && session.endTime
+          ? new Date(session.endTime).getTime()
+          : Date.now();
+      return Math.max(0, Math.floor((endMs - startMs) / 1000));
+    }
+    return 0;
+  }); // in seconds
   const [isEndingSession, setIsEndingSession] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -499,9 +514,9 @@ function InstructorSessionContent({
   };
 
   return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
+      <div className="bg-card border-b border-border shadow-sm">
         <div className="max-w-[1800px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -530,8 +545,8 @@ function InstructorSessionContent({
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-gray-600">Session: {session.title}</p>
-              <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground">Session: {session.title}</p>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {formatTime(elapsedTime)}
@@ -597,7 +612,7 @@ function InstructorSessionContent({
           <div className="space-y-4">
             {/* Live Chat */}
             <Card className="shadow-sm">
-              <div className="p-4 border-b">
+              <div className="p-4 border-b border-border">
                 <h3 className="font-semibold">Live Chat</h3>
               </div>
               <div className="p-4">
@@ -606,12 +621,12 @@ function InstructorSessionContent({
                     <div 
                       key={msg.id} 
                       className={`p-2 rounded text-sm ${
-                        msg.isInstructor ? 'bg-orange-50' : 'bg-gray-50'
+                        msg.isInstructor ? 'bg-orange-50 dark:bg-orange-950/30' : 'bg-muted/40'
                       }`}
                     >
                       <div className="font-semibold text-xs">{msg.sender}</div>
-                      <div className="text-xs text-gray-500">{msg.time}</div>
-                      <div className="mt-1 text-gray-700">{msg.text}</div>
+                      <div className="text-xs text-muted-foreground">{msg.time}</div>
+                      <div className="mt-1 text-foreground">{msg.text}</div>
                     </div>
                   ))}
                 </div>
@@ -838,14 +853,14 @@ function InstructorSessionContent({
                       disabled={sessionStatus !== 'ongoing'}
                       className={`relative p-4 rounded-full transition-all ${
                         sessionStatus !== 'ongoing' 
-                          ? 'bg-gray-200 cursor-not-allowed opacity-50' 
+                          ? 'bg-muted cursor-not-allowed opacity-50' 
                           : isCameraOff 
-                            ? 'bg-gray-200 hover:bg-gray-300' 
+                            ? 'bg-muted hover:bg-muted/80' 
                             : 'bg-blue-500 hover:bg-blue-600'
                       }`}
                     >
                       {isCameraOff ? (
-                        <CameraOff className={`h-6 w-6 ${sessionStatus !== 'ongoing' ? 'text-gray-400' : 'text-gray-700'}`} />
+                        <CameraOff className={`h-6 w-6 ${sessionStatus !== 'ongoing' ? 'text-muted-foreground' : 'text-foreground'}`} />
                       ) : (
                         <Camera className="h-6 w-6 text-white" />
                       )}
@@ -853,7 +868,7 @@ function InstructorSessionContent({
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                       )}
                     </button>
-                    <span className="text-xs font-medium text-gray-700">
+                    <span className="text-xs font-medium text-foreground">
                       {isCameraOff ? 'Camera Off' : 'Camera On'}
                     </span>
                   </div>
@@ -865,7 +880,7 @@ function InstructorSessionContent({
                       disabled={sessionStatus !== 'ongoing'}
                       className={`relative p-4 rounded-full transition-all ${
                         sessionStatus !== 'ongoing' 
-                          ? 'bg-gray-200 cursor-not-allowed opacity-50' 
+                          ? 'bg-muted cursor-not-allowed opacity-50' 
                           : isMuted 
                             ? 'bg-red-500 hover:bg-red-600' 
                             : 'bg-green-500 hover:bg-green-600'
@@ -880,7 +895,7 @@ function InstructorSessionContent({
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse" />
                       )}
                     </button>
-                    <span className="text-xs font-medium text-gray-700">
+                    <span className="text-xs font-medium text-foreground">
                       {isMuted ? 'Muted' : 'Unmuted'}
                     </span>
                   </div>
@@ -892,30 +907,30 @@ function InstructorSessionContent({
                       disabled={sessionStatus !== 'ongoing'}
                       className={`relative p-4 rounded-full transition-all ${
                         sessionStatus !== 'ongoing' 
-                          ? 'bg-gray-200 cursor-not-allowed opacity-50' 
+                          ? 'bg-muted cursor-not-allowed opacity-50' 
                           : isScreenSharing 
                             ? 'bg-purple-500 hover:bg-purple-600' 
-                            : 'bg-gray-200 hover:bg-gray-300'
+                            : 'bg-muted hover:bg-muted/80'
                       }`}
                     >
                       <MonitorUp className={`h-6 w-6 ${
                         sessionStatus !== 'ongoing' 
-                          ? 'text-gray-400' 
+                          ? 'text-muted-foreground' 
                           : isScreenSharing 
                             ? 'text-white' 
-                            : 'text-gray-700'
+                            : 'text-foreground'
                       }`} />
                       {isScreenSharing && sessionStatus === 'ongoing' && (
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-400 rounded-full border-2 border-white animate-pulse" />
                       )}
                     </button>
-                    <span className="text-xs font-medium text-gray-700">
+                    <span className="text-xs font-medium text-foreground">
                       {isScreenSharing ? 'Sharing' : 'Share Screen'}
                     </span>
                   </div>
 
                   {/* Divider */}
-                  <div className="h-16 w-px bg-gray-300 mx-2" />
+                  <div className="h-16 w-px bg-border mx-2" />
 
                   {/* Record Control */}
                   <div className="flex flex-col items-center gap-2">
@@ -927,24 +942,24 @@ function InstructorSessionContent({
                       disabled={sessionStatus !== 'ongoing'}
                       className={`relative p-4 rounded-full transition-all ${
                         sessionStatus !== 'ongoing' 
-                          ? 'bg-gray-200 cursor-not-allowed opacity-50' 
+                          ? 'bg-muted cursor-not-allowed opacity-50' 
                           : isRecording 
                             ? 'bg-red-500 hover:bg-red-600' 
-                            : 'bg-gray-200 hover:bg-gray-300'
+                            : 'bg-muted hover:bg-muted/80'
                       }`}
                     >
                       <Circle className={`h-6 w-6 ${
                         sessionStatus !== 'ongoing' 
-                          ? 'text-gray-400' 
+                          ? 'text-muted-foreground' 
                           : isRecording 
                             ? 'text-white fill-white' 
-                            : 'text-gray-700'
+                            : 'text-foreground'
                       }`} />
                       {isRecording && sessionStatus === 'ongoing' && (
                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full border-2 border-white animate-pulse" />
                       )}
                     </button>
-                    <span className="text-xs font-medium text-gray-700">
+                    <span className="text-xs font-medium text-foreground">
                       {isRecording ? 'Recording' : 'Record'}
                     </span>
                   </div>
@@ -953,7 +968,7 @@ function InstructorSessionContent({
                 {/* Status Text */}
                 {sessionStatus !== 'ongoing' && (
                   <div className="mt-4 text-center">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {sessionStatus === 'not-started' && 'Start the session to enable controls'}
                       {sessionStatus === 'paused' && 'Session paused - controls disabled'}
                       {sessionStatus === 'ended' && 'Session ended'}
@@ -967,7 +982,7 @@ function InstructorSessionContent({
             {/* Session Tools - Only show when NOT in fullscreen */}
             {!isFullscreen && (
             <Card className="shadow-sm">
-              <div className="p-4 border-b">
+              <div className="p-4 border-b border-border">
                 <h3 className="font-semibold">Session Tools</h3>
               </div>
               <div className="p-4">
@@ -1034,7 +1049,7 @@ function InstructorSessionContent({
           <div className="space-y-4">
             {/* Attendance Summary */}
             <Card className="shadow-sm">
-              <div className="p-4 border-b">
+              <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold">Attendance Summary</h3>
                   <div className="flex items-center gap-2">
@@ -1076,11 +1091,11 @@ function InstructorSessionContent({
               <div className="p-4">
                 {/* Progress Bar */}
                 <div className="mb-4">
-                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>Attendance Rate</span>
                     <span className="font-semibold">{statistics.attendanceRate}%</span>
                   </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-green-500 transition-all duration-500" 
                       style={{ width: `${statistics.attendanceRate}%` }} 
@@ -1090,25 +1105,25 @@ function InstructorSessionContent({
 
                 {/* Stats */}
                 <div className="grid grid-cols-2 gap-2 mb-4">
-                  <div className="text-center p-3 bg-gray-50 rounded">
-                    <Users className="h-5 w-5 mx-auto mb-1 text-gray-600" />
+                  <div className="text-center p-3 bg-muted/40 rounded">
+                    <Users className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
                     <div className="text-2xl font-bold">{statistics.total}</div>
-                    <div className="text-xs text-gray-600">Total</div>
+                    <div className="text-xs text-muted-foreground">Total</div>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded">
+                  <div className="text-center p-3 bg-green-50 dark:bg-green-950/30 rounded border border-green-200/70 dark:border-green-900">
                     <CheckCircle2 className="h-5 w-5 mx-auto mb-1 text-green-600" />
                     <div className="text-2xl font-bold text-green-600">{statistics.present}</div>
-                    <div className="text-xs text-gray-600">Present</div>
+                    <div className="text-xs text-muted-foreground">Present</div>
                   </div>
-                  <div className="text-center p-3 bg-blue-50 rounded">
+                  <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/30 rounded border border-blue-200/70 dark:border-blue-900">
                     <Wifi className="h-5 w-5 mx-auto mb-1 text-blue-600" />
                     <div className="text-2xl font-bold text-blue-600">{statistics.online}</div>
-                    <div className="text-xs text-gray-600">Online</div>
+                    <div className="text-xs text-muted-foreground">Online</div>
                   </div>
-                  <div className="text-center p-3 bg-red-50 rounded">
+                  <div className="text-center p-3 bg-red-50 dark:bg-red-950/30 rounded border border-red-200/70 dark:border-red-900">
                     <XCircle className="h-5 w-5 mx-auto mb-1 text-red-600" />
                     <div className="text-2xl font-bold text-red-600">{statistics.absent}</div>
-                    <div className="text-xs text-gray-600">Absent</div>
+                    <div className="text-xs text-muted-foreground">Absent</div>
                   </div>
                 </div>
 
@@ -1118,7 +1133,7 @@ function InstructorSessionContent({
                     Participants ({filteredParticipants.length})
                   </h4>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
                       placeholder="Search students..." 
                       className="pl-9 h-9 text-sm"
@@ -1130,12 +1145,12 @@ function InstructorSessionContent({
 
                 {/* Participants List */}
                 {isLoadingAttendance && filteredParticipants.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
                     <p className="text-sm">Loading attendance...</p>
                   </div>
                 ) : filteredParticipants.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted-foreground">
                     <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No participants found</p>
                   </div>
@@ -1156,15 +1171,15 @@ function InstructorSessionContent({
                       const avatarColor = 
                         participant.verified ? 'bg-orange-500' : 
                         participant.isOnline ? 'bg-blue-500' : 
-                        'bg-gray-400';
+                        'bg-muted-foreground';
 
                       return (
                         <div 
                           key={participant.id} 
-                          className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors"
+                          className="flex items-center gap-2 p-2 rounded hover:bg-muted/40 transition-colors"
                         >
                           <div className="relative">
-                            <div className={`h-9 w-9 rounded-full ${avatarColor} text-white flex items-center justify-center text-xs font-semibold flex-shrink-0`}>
+                            <div className={`h-9 w-9 rounded-full ${avatarColor} text-white flex items-center justify-center text-xs font-semibold shrink-0`}>
                               {participant.image ? (
                                 <img 
                                   src={participant.image} 
@@ -1186,7 +1201,7 @@ function InstructorSessionContent({
                                 <Wifi className="h-3 w-3 text-green-600" />
                               )}
                             </div>
-                            <div className="flex items-center gap-1 text-xs text-gray-600">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <span className={`inline-block w-2 h-2 rounded-full ${statusColor}`} />
                               {participant.status === 'present' && `Present • ${Math.round(participant.confidence * 100)}%`}
                               {participant.status === 'checking' && 'Checking...'}
@@ -1194,11 +1209,11 @@ function InstructorSessionContent({
                             </div>
                           </div>
                           {participant.verified ? (
-                            <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
+                            <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
                           ) : participant.status === 'checking' ? (
-                            <RefreshCw className="h-5 w-5 text-yellow-600 flex-shrink-0 animate-spin" />
+                            <RefreshCw className="h-5 w-5 text-yellow-600 shrink-0 animate-spin" />
                           ) : (
-                            <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                            <XCircle className="h-5 w-5 text-red-600 shrink-0" />
                           )}
                         </div>
                       );

@@ -99,8 +99,8 @@ export default function VideoDisplay() {
   return (
     <div className="w-full h-full bg-gray-900 flex items-center justify-center">
       <div className="text-center text-white">
-        <div className="text-lg mb-2">Waiting for video...</div>
-        <div className="text-sm opacity-75">Instructor will start camera soon</div>
+        <div className="text-lg mb-2">Waiting...</div>
+        <div className="text-sm opacity-75">Class will start soon</div>
       </div>
     </div>
   );
