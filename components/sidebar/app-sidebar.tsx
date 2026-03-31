@@ -54,6 +54,11 @@ const data = {
       url: "/admin/live-class",
       icon: "IconLivePhotoFilled", // Changed to string
     },
+    {
+      title: "Users",
+      url: "/admin/users",
+      icon: "IconUsers", // Changed to string
+    },
   ],
   navClouds: [
     {

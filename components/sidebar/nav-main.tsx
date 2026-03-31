@@ -9,6 +9,7 @@ import {
   IconSearch,
   IconBook,
   IconLivePhotoFilled,
+  IconUsers,
   // Import all icons you might use
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const iconMap = {
   IconCirclePlusFilled: IconCirclePlusFilled,
   IconBook: IconBook,
   IconLivePhotoFilled: IconLivePhotoFilled,
+  IconUsers: IconUsers,
   // Add more as needed
 } as const;
 
