@@ -3,8 +3,9 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VideoIcon, ClockIcon, CalendarIcon, UsersIcon } from "lucide-react";
-import Link from "next/link";
 import { getLiveClassSessionData } from "@/app/data/live-class/get-live-class-session-data";
+import { requireUser } from "@/app/data/user/require-user";
+import JoinSessionGate from "./_components/JoinSessionGate";
 
 interface iAppProps {
   params: Promise<{ slug: string; classId: string }>;
@@ -12,6 +13,7 @@ interface iAppProps {
 
 export default async function LiveClassSessionPage({ params }: iAppProps) {
   const { slug, classId } = await params;
+  const user = await requireUser();
   const { session, liveClass, isInstructor } = await getLiveClassSessionData(slug, classId);
 
   const sessionTime = new Date(session.startTime);
@@ -72,12 +74,11 @@ export default async function LiveClassSessionPage({ params }: iAppProps) {
             <CardContent className="space-y-4">
               {session.status === "Ongoing" ||
               (canJoin && session.status === "Scheduled") ? (
-                <Button className="w-full" size="lg" asChild>
-                  <Link href={`/session/${session.id}`}>
-                    <VideoIcon className="size-4 mr-2" />
-                    {isInstructor ? 'Start Live Session' : 'Join Live Session'}
-                  </Link>
-                </Button>
+                <JoinSessionGate
+                  sessionId={session.id}
+                  userId={user.id}
+                  isInstructor={isInstructor}
+                />
               ) : session.status === "Completed" ? (
                 <Button className="w-full" disabled variant="outline">
                   Session Ended
