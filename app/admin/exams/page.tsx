@@ -1,5 +1,5 @@
 import { adminGetExams } from "@/app/data/admin/admin-get-exams";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -8,9 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Eye, Edit, Trash2 } from "lucide-react";
+import { Plus, FileText, Eye, Edit } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import { CopyExamIdButton } from "./_components/CopyButton";
+// import { CopyExamIdButton } from "./_components/CopyExamIdButton";
 
 export default async function AdminExamsPage() {
   const exams = await adminGetExams();
@@ -38,7 +39,7 @@ export default async function AdminExamsPage() {
           <Card key={exam.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div>
+                <div className="flex-1">
                   <CardTitle className="line-clamp-1">{exam.title}</CardTitle>
                   <CardDescription className="line-clamp-2 mt-1">
                     {exam.description || "No description"}
@@ -85,15 +86,7 @@ export default async function AdminExamsPage() {
                   <Edit className="h-4 w-4" />
                   Edit
                 </Link>
-                {/* <button
-                  className={buttonVariants({
-                    variant: "destructive",
-                    size: "sm",
-                    className: "gap-1",
-                  })}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button> */}
+                <CopyExamIdButton examId={exam.id} />
               </div>
             </CardContent>
           </Card>
