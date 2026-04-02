@@ -37,6 +37,7 @@ model User {
   liveClassMessages LiveClassMessage[] // live class chat messages
 
   @@map("user")
+  examSubmissions ExamSubmission[]
 }
 
 model Session {
@@ -379,6 +380,69 @@ model ClassResource {
   class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+}
+
+model Exam {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  duration    Int?     // Duration in minutes
+  passingScore Int?    // Minimum score to pass
+  status      ExamStatus @default(Draft)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions   Question[]
+  submissions ExamSubmission[]
+
+  // Remove liveClassId and liveClass relation
+}
+
+model Question {
+  id          String   @id @default(uuid())
+  text        String   @db.Text
+  options     String[] // Array of option texts
+  correctAnswer String
+  points      Int      @default(1)
+  order       Int
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([examId])
+}
+
+model ExamSubmission {
+  id          String   @id @default(uuid())
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  score       Int      @default(0)
+  totalPoints Int      @default(0)
+  percentage  Float    @default(0)
+  status      SubmissionStatus @default(InProgress)
+  flagged     Boolean  @default(false)
+  violationCount Int    @default(0)
+  answers     Json     @default("{}")
+  startedAt   DateTime @default(now())
+  submittedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@unique([examId, userId])
+  @@index([userId])
+  @@index([examId])
+}
+
+enum ExamStatus {
+  Draft
+  Published
+  Archived
+}
+
+enum SubmissionStatus {
+  InProgress
+  Submitted
+  Graded
 }
 
 model LiveEnrollment {

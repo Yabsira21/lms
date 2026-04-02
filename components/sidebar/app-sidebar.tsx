@@ -59,6 +59,11 @@ const data = {
       url: "/admin/users",
       icon: "IconUsers", // Changed to string
     },
+    {
+      title: "Exams",
+      url: "/admin/exams",
+      icon: "IconReport", // Changed to string
+    },
   ],
   navClouds: [
     {

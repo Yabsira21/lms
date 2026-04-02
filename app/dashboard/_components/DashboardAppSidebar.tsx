@@ -117,6 +117,11 @@ const data = {
       url: "/dashboard",
       icon: "IconDashboard", // Pass string instead of component
     },
+    {
+      title: "My Exams",
+      url: "/dashboard/exams",
+      icon: "IconReport", // or any icon you prefer
+    },
   ],
   navSecondary: [
     {
