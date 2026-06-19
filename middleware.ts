@@ -1,31 +1,3 @@
-// import { betterFetch } from "@better-fetch/fetch";
-// import type { auth } from "@/lib/auth";
-// import { NextRequest, NextResponse } from "next/server";
-
-// type Session = typeof auth.$Infer.Session;
-
-// export async function middleware(request: NextRequest) {
-//   const { data: session } = await betterFetch<Session>(
-//     "/api/auth/get-session",
-//     {
-//       baseURL: request.nextUrl.origin,
-//       headers: {
-//         cookie: request.headers.get("cookie") || "", // Forward the cookies from the request
-//       },
-//     }
-//   );
-
-//   if (!session) {
-//     return NextResponse.redirect(new URL("/login", request.url));
-//   }
-
-//   return NextResponse.next();
-// }
-
-// export const config = {
-//   matcher: ["/admin/:path*"], // Apply middleware to specific routes
-// };
-
 import arcjet, { createMiddleware, detectBot } from "@arcjet/next";
 import { env } from "./lib/env";
 import { betterFetch } from "@better-fetch/fetch";
@@ -52,6 +24,9 @@ async function authMiddleware(request: NextRequest) {
   return NextResponse.next();
 }
 export const config = {
+  // ⚡ FIX: Force middleware to use Node.js runtime instead of 1MB Edge runtime
+  runtime: "nodejs",
+
   // matcher tells Next.js which routes to run the middleware on.
   // This runs the middleware on all routes except for static assets.
   matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
