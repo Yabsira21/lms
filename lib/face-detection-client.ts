@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
 /**
  * Client-side face detection and recognition using face-api.js
- * 
+ *
  * Architecture:
  * - face-api.js TinyFaceDetector for fast face detection
  * - face-api.js FaceNet model for 128-dimensional embeddings
- * 
+ *
  * This approach is more reliable than MediaPipe in browser environments
  * and provides excellent accuracy with FaceNet embeddings.
  */
@@ -20,27 +20,26 @@ let importPromise: Promise<any> | null = null;
  * Uses direct dynamic import - the 'use client' directive should prevent SSR analysis
  */
 async function lazyImportFaceApi(): Promise<any> {
-  if (typeof window === 'undefined') {
-    throw new Error('Face detection can only run in the browser');
+  if (typeof window === "undefined") {
+    throw new Error("Face detection can only run in the browser");
   }
-  
+
   // Check if already loaded in window
   // @ts-expect-error - face-api might be on window
   if (window.faceapi) {
     // @ts-expect-error
     return window.faceapi;
   }
-  
+
   // Direct dynamic import
   // With 'use client' and window check, this should only execute in browser
-  // @ts-expect-error - face-api.js doesn't have TypeScript definitions
-  const module = await import('face-api.js');
+  const module = await import("face-api.js");
   const faceApiModule = module.default || module;
-  
+
   // Store in window for future use
   // @ts-expect-error
   window.faceapi = faceApiModule;
-  
+
   return faceApiModule;
 }
 
@@ -49,8 +48,8 @@ async function lazyImportFaceApi(): Promise<any> {
  */
 async function loadFaceApiModels(): Promise<any> {
   // Early return if not in browser
-  if (typeof window === 'undefined') {
-    throw new Error('Face detection can only run in the browser');
+  if (typeof window === "undefined") {
+    throw new Error("Face detection can only run in the browser");
   }
 
   if (faceApi) {
@@ -65,33 +64,35 @@ async function loadFaceApiModels(): Promise<any> {
   isModelsLoading = true;
   try {
     // Ensure we're definitely in browser before importing
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
-      throw new Error('Browser APIs not available');
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      throw new Error("Browser APIs not available");
     }
 
     // Lazy import - only executed in browser runtime
     importPromise = lazyImportFaceApi();
     const faceApiModule = await importPromise;
     faceApi = faceApiModule;
-    
+
     // Load required models from public/models directory
-    const modelsPath = '/models';
-    
-    console.log('Loading face-api.js models...');
-    
+    const modelsPath = "/models";
+
+    console.log("Loading face-api.js models...");
+
     await Promise.all([
       faceApi.nets.tinyFaceDetector.loadFromUri(modelsPath),
       faceApi.nets.faceLandmark68Net.loadFromUri(modelsPath),
       faceApi.nets.faceRecognitionNet.loadFromUri(modelsPath), // FaceNet model for 128-dim embeddings
     ]);
 
-    console.log('Face-api.js models loaded successfully');
+    console.log("Face-api.js models loaded successfully");
     isModelsLoading = false;
     return faceApi;
   } catch (error) {
     isModelsLoading = false;
-    console.error('Error loading face-api.js models:', error);
-    throw new Error(`Failed to load face-api.js models: ${error instanceof Error ? error.message : String(error)}`);
+    console.error("Error loading face-api.js models:", error);
+    throw new Error(
+      `Failed to load face-api.js models: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -99,7 +100,7 @@ async function loadFaceApiModels(): Promise<any> {
  * Detect faces using face-api.js
  */
 export async function detectFaces(
-  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
 ): Promise<any[]> {
   await loadFaceApiModels();
 
@@ -108,10 +109,10 @@ export async function detectFaces(
   if (image instanceof HTMLCanvasElement) {
     canvas = image;
   } else {
-    canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     if (!ctx) {
-      throw new Error('Failed to get canvas context');
+      throw new Error("Failed to get canvas context");
     }
 
     if (image instanceof HTMLVideoElement) {
@@ -141,7 +142,7 @@ export async function detectFaces(
  * Generate 128-dimensional FaceNet embedding using face-api.js
  */
 export async function generateEmbedding(
-  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
 ): Promise<number[]> {
   await loadFaceApiModels();
 
@@ -150,10 +151,10 @@ export async function generateEmbedding(
   if (image instanceof HTMLCanvasElement) {
     canvas = image;
   } else {
-    canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     if (!ctx) {
-      throw new Error('Failed to get canvas context');
+      throw new Error("Failed to get canvas context");
     }
 
     if (image instanceof HTMLVideoElement) {
@@ -174,7 +175,7 @@ export async function generateEmbedding(
     .withFaceDescriptor();
 
   if (!detection) {
-    throw new Error('No face detected or failed to generate embedding');
+    throw new Error("No face detected or failed to generate embedding");
   }
 
   // Return 128-dimensional FaceNet embedding
@@ -186,7 +187,7 @@ export async function generateEmbedding(
  * Detect a single face and generate its FaceNet embedding
  */
 export async function detectAndEmbed(
-  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement
+  image: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
 ): Promise<{ face: any; embedding: number[] }> {
   await loadFaceApiModels();
 
@@ -195,10 +196,10 @@ export async function detectAndEmbed(
   if (image instanceof HTMLCanvasElement) {
     canvas = image;
   } else {
-    canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
     if (!ctx) {
-      throw new Error('Failed to get canvas context');
+      throw new Error("Failed to get canvas context");
     }
 
     if (image instanceof HTMLVideoElement) {
@@ -219,7 +220,7 @@ export async function detectAndEmbed(
     .withFaceDescriptor();
 
   if (!detection) {
-    throw new Error('No face detected in image');
+    throw new Error("No face detected in image");
   }
 
   // Extract embedding and face info

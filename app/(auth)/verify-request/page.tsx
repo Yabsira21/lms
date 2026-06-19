@@ -14,14 +14,13 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { authClient } from "@/lib/auth-client";
-import { Value } from "@radix-ui/react-select";
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-// import { useRouter } from "next/router";
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense } from "react";
 import { toast } from "sonner";
 
-export default function VerifyRequest() {
+// 1. Move your primary form component logic here
+function VerifyRequestForm() {
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [emailPending, startTransition] = useTransition();
@@ -41,12 +40,11 @@ export default function VerifyRequest() {
             });
             router.push("/");
           },
-          onError: (error) => {
+          onError: () => {
             toast.error("Error verifying Email");
           },
         },
       });
-      // Verify OTP logic here
     });
   }
 
@@ -55,7 +53,7 @@ export default function VerifyRequest() {
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Please check your email</CardTitle>
         <CardDescription>
-          we have sent a verification email code to your email address. Please
+          We have sent a verification email code to your email address. Please
           open the email and paste it below
         </CardDescription>
       </CardHeader>
@@ -89,7 +87,6 @@ export default function VerifyRequest() {
           className="w-full"
           disabled={emailPending || !isOtpCompleted}
         >
-          {/* Verify Account */}
           {emailPending ? (
             <>
               <Loader2 className="size-4 animate-spin" />
@@ -103,5 +100,23 @@ export default function VerifyRequest() {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+// 2. Export a clean Page entrypoint wrapped in Suspense
+export default function VerifyRequest() {
+  return (
+    <Suspense
+      fallback={
+        <Card className="w-full mx-auto p-6 flex flex-col items-center justify-center gap-4">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Preparing verification setup...
+          </p>
+        </Card>
+      }
+    >
+      <VerifyRequestForm />
+    </Suspense>
   );
 }
