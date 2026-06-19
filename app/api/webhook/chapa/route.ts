@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 function verifyChapaSignature(
   req: NextRequest,
   secret: string,
-  rawBody: string
+  rawBody: string,
 ): boolean {
   // Get the signatures from the headers
   const chapaSignature = req.headers.get("chapa-signature");
@@ -24,32 +24,33 @@ function verifyChapaSignature(
   return chapaSignature === expectedHash || xChapaSignature === expectedHash;
 }
 
-export async function POST(request: NextRequest) {
-  console.log("wow xoxo");
-  const rawBody = await request.text();
+// export async function POST(request: NextRequest) {
+//   console.log("wow xoxo");
+//   const rawBody = await request.text();
 
-  console.log(`rawBody: ${rawBody}`);
+//   console.log(`rawBody: ${rawBody}`);
 
-  // Verify the signature
-  if (!verifyChapaSignature(request, env.CHAPA_SECRET_HASH, rawBody)) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-  }
+//   // Verify the signature
+//   if (!verifyChapaSignature(request, env.CHAPA_SECRET_HASH, rawBody)) {
+//     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+//   }
 
-  // Process the webhook...
-  const event = JSON.parse(rawBody);
+//   // Process the webhook...
+//   const event = JSON.parse(rawBody);
 
-  console.log(`event: ${event}`);
+//   console.log(`event: ${event}`);
 
-  //   try {
-  //   } catch {
-  //     return new Response("Webhook error", { status: 400 });
-  //   }
+//   //   try {
+//   //   } catch {
+//   //     return new Response("Webhook error", { status: 400 });
+//   //   }
 
-  //   const session = event.data.object;
-  // Your processing logic here
-}
+//   //   const session = event.data.object;
+//   // Your processing logic here
+// }
 
 export async function GET(request: NextRequest) {
+  console.log("Received GET request at Chapa webhook endpoint");
   // 1️⃣ Extract trx_ref from query params
   const url = new URL(request.url);
   const trxRef = url.searchParams.get("trx_ref");
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
           "Content-Type": "application/json",
         },
         cache: "no-store",
-      }
+      },
     );
 
     const data = await verifyResponse.json();
@@ -113,14 +114,14 @@ export async function GET(request: NextRequest) {
         verified: true,
         chapaStatus: data?.data?.status,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error verifying Chapa transaction:", error);
 
     return NextResponse.json(
       { error: "Failed to verify transaction" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

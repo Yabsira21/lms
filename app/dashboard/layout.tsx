@@ -1,11 +1,18 @@
-// import { AppSidebar } from "@/components/sidebar/app-sidebar";
+"use client";
+
 import { SiteHeader } from "@/components/sidebar/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ReactNode } from "react";
 import { AppSidebar } from "./_components/DashboardAppSidebar";
+import { usePathname } from "next/navigation";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  //   return <div>layout</div>;
+  const pathname = usePathname();
+
+  const sidebarClass = pathname.includes("/liveclass")
+    ? "h-screen overflow-hidden"
+    : "";
+
   return (
     <SidebarProvider
       style={
@@ -16,22 +23,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset>
+
+      <SidebarInset className={sidebarClass}>
         <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          {children}
-          {/* <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
-            </div>
-          </div> */}
+
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-hidden">{children}</div>
         </div>
-        {/* <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col items-center px-4 lg:px-8">
-            <div className="w-full max-w-6xl flex flex-col gap-4 py-6 md:gap-8 md:py-8">
-              {children}
-            </div>
-          </div>
-        </div> */}
       </SidebarInset>
     </SidebarProvider>
   );

@@ -28,7 +28,6 @@ export const auth = betterAuth({
       async sendVerificationOTP({ email, otp }) {
         await resend.emails.send({
           from: "LMS <onboarding@resend.dev>",
-          // from: "LMS <onboarding@resend.dev>",
           to: [email],
           subject: "LMS, verify your email",
           // react: EmailTemplate({ firstName: "John" }),
@@ -36,6 +35,6 @@ export const auth = betterAuth({
         });
       },
     }),
-    admin({})
+    admin({}),
   ],
 });

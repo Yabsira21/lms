@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  // Keep the imports for type safety, but we won't use them directly in the data
   IconCamera,
   IconChartBar,
   IconDashboard,
@@ -37,28 +38,37 @@ import Link from "next/link";
 import Image from "next/image";
 
 const data = {
-  // user: {
-  //   name: "shadcn",
-  //   email: "m@example.com",
-  //   avatar: "/avatars/shadcn.jpg",
-  // },
   navMain: [
     {
       title: "Dashboard",
       url: "/admin",
-      icon: IconDashboard,
+      icon: "IconDashboard", // Changed to string
     },
     {
       title: "Courses",
       url: "/admin/courses",
-      icon: IconListDetails,
+      icon: "IconBook", // Changed to string
     },
-    //
+    {
+      title: "Live Classes",
+      url: "/admin/live-class",
+      icon: "IconLivePhotoFilled", // Changed to string
+    },
+    {
+      title: "Users",
+      url: "/admin/users",
+      icon: "IconUsers", // Changed to string
+    },
+    {
+      title: "Exams",
+      url: "/admin/exams",
+      icon: "IconReport", // Changed to string
+    },
   ],
   navClouds: [
     {
       title: "Capture",
-      icon: IconCamera,
+      icon: "IconCamera", // Changed to string
       isActive: true,
       url: "#",
       items: [
@@ -74,7 +84,7 @@ const data = {
     },
     {
       title: "Proposal",
-      icon: IconFileDescription,
+      icon: "IconFileDescription", // Changed to string
       url: "#",
       items: [
         {
@@ -89,7 +99,7 @@ const data = {
     },
     {
       title: "Prompts",
-      icon: IconFileAi,
+      icon: "IconFileAi", // Changed to string
       url: "#",
       items: [
         {
@@ -107,36 +117,19 @@ const data = {
     {
       title: "Settings",
       url: "#",
-      icon: IconSettings,
+      icon: "IconSettings", // Changed to string
     },
     {
       title: "Get Help",
       url: "#",
-      icon: IconHelp,
+      icon: "IconHelp", // Changed to string
     },
     {
       title: "Search",
       url: "#",
-      icon: IconSearch,
+      icon: "IconSearch", // Changed to string
     },
   ],
-  // documents: [
-  //   {
-  //     name: "Data Library",
-  //     url: "#",
-  //     icon: IconDatabase,
-  //   },
-  //   {
-  //     name: "Reports",
-  //     url: "#",
-  //     icon: IconReport,
-  //   },
-  //   {
-  //     name: "Word Assistant",
-  //     url: "#",
-  //     icon: IconFileWord,
-  //   },
-  // ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

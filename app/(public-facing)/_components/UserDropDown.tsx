@@ -49,9 +49,11 @@ export default function UserDropDown({ name, email, imageUrl }: iAppProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={12} className="max-w-64">
         <DropdownMenuLabel className="flex min-w-0 flex-col">
-          <span className="text-foreground truncate text-sm font-medium">
-            {name}
-          </span>
+          <Link href="/profile" className="hover:underline">
+            <span className="text-foreground truncate text-sm font-medium">
+              {name}
+            </span>
+          </Link>
           <span className="text-muted-foreground truncate text-xs font-normal">
             {email}
           </span>
@@ -78,6 +80,16 @@ export default function UserDropDown({ name, email, imageUrl }: iAppProps) {
                 aria-hidden="true"
               />
               <span>Dashboard</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/profile">
+              <UserIcon
+                size={16}
+                className="opacity-60"
+                aria-hidden="true"
+              />
+              <span>Profile</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
